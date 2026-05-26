@@ -1,59 +1,156 @@
-import { headers as getHeaders } from 'next/headers.js'
-import Image from 'next/image'
+import Link from 'next/link'
 import { getPayload } from 'payload'
-import React from 'react'
-import { fileURLToPath } from 'url'
-
 import config from '@/payload.config'
-import './styles.css'
+import type { Product, Media } from '@/payload-types'
+import ProductCard from '@/components/ProductCard'
+import type { ProductCardData } from '@/types'
+import { toCardData } from '@/lib/products'
 
+// ─── Datos estáticos ──────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { label: 'Telar de cintura', slug: 'Telar', color: '#F8D7EA', text: '#C13584', icon: '🧵' },
+  { label: 'Seda pura', slug: 'Seda', color: '#E8EAF6', text: '#3949AB', icon: '🌸' },
+  { label: 'Bordados', slug: 'Bordados', color: '#FFF3E0', text: '#E65100', icon: '🌺' },
+  { label: 'Algodón natural', slug: 'Algodón', color: '#E8F5E9', text: '#2E7D32', icon: '🌿' },
+  { label: 'Lana', slug: 'Lana', color: '#FCE4EC', text: '#AD1457', icon: '✨' },
+]
+
+const TRUST_ITEMS = [
+  { icon: '🚚', title: 'Envío gratis', sub: 'En compras +$800 MXN' },
+  { icon: '🔒', title: 'Pago seguro', sub: 'Tarjeta, OXXO, transferencia' },
+  { icon: '↩️', title: 'Devoluciones', sub: '30 días sin preguntas' },
+  { icon: '🌿', title: 'Comercio justo', sub: 'Precio directo a la artesana' },
+]
+
+// ─── Página ───────────────────────────────────────────────────────────────────
 export default async function HomePage() {
-  const headers = await getHeaders()
-  const payloadConfig = await config
-  const payload = await getPayload({ config: payloadConfig })
-  const { user } = await payload.auth({ headers })
+  const payload = await getPayload({ config: await config })
 
-  const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
+  const { docs: featured } = await payload.find({
+    collection: 'products',
+    where: { featured: { equals: true } },
+    depth: 1,
+    limit: 4,
+  })
 
   return (
-    <div className="home">
-      <div className="content">
-        <picture>
-          <source srcSet="https://raw.githubusercontent.com/payloadcms/payload/3.x/packages/ui/src/assets/payload-favicon.svg" />
-          <Image
-            alt="Payload Logo"
-            height={65}
-            src="https://raw.githubusercontent.com/payloadcms/payload/3.x/packages/ui/src/assets/payload-favicon.svg"
-            width={65}
-          />
-        </picture>
-        {!user && <h1>Welcome to your new project.</h1>}
-        {user && <h1>Welcome back, {user.email}</h1>}
-        <div className="links">
-          <a
-            className="admin"
-            href={payloadConfig.routes.admin}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Go to admin panel
-          </a>
-          <a
-            className="docs"
-            href="https://payloadcms.com/docs"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Documentation
-          </a>
+    <div>
+      {/* ── Hero ── */}
+      <section className="hero">
+        <div className="hero-image">
+          <div className="hero-placeholder">
+            📷
+            <span>Fotografía principal</span>
+          </div>
         </div>
-      </div>
-      <div className="footer">
-        <p>Update this page by editing</p>
-        <a className="codeLink" href={fileURL}>
-          <code>app/(frontend)/page.tsx</code>
-        </a>
-      </div>
+
+        <div className="hero-content">
+          <div className="hero-badge">✨ NUEVA COLECCIÓN 2026</div>
+
+          <h1 className="hero-title">
+            Rebozos que
+            <br />
+            <em>cuentan historias</em>
+          </h1>
+
+          <p className="hero-description">
+            Tejidos a mano por artesanas mexicanas. Cada rebozo es una pieza única llena de cultura,
+            arte y tradición ancestral.
+          </p>
+
+          <div className="hero-actions">
+            <Link href="/catalog" className="btn-primary">
+              Ver colección →
+            </Link>
+            <Link href="/#historia" className="btn-outline">
+              Nuestra historia
+            </Link>
+          </div>
+
+          <div className="hero-stats">
+            {[
+              ['50+', 'Artesanas'],
+              ['12', 'Regiones'],
+              ['1998', 'Desde'],
+            ].map(([n, l]) => (
+              <div key={l} className="hero-stat">
+                <span className="hero-stat-number">{n}</span>
+                <span className="hero-stat-label">{l}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Categorías ── */}
+      <section className="section-categories">
+        <h2 className="section-title">Explora por tipo</h2>
+        <div className="categories-list">
+          {CATEGORIES.map((cat) => (
+            <Link
+              key={cat.slug}
+              href={`/catalog?category=${cat.slug}`}
+              className="category-chip"
+              style={{ background: cat.color, color: cat.text }}
+            >
+              {cat.icon} {cat.label}
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Productos destacados ── */}
+      <section className="section-featured">
+        <div className="section-header">
+          <h2 className="section-title">Más vendidos</h2>
+          <Link href="/catalog" className="link-ver-todos">
+            Ver todos →
+          </Link>
+        </div>
+
+        {featured.length === 0 ? (
+          <p className="empty-state">Aún no hay productos destacados. Márcalos en el admin.</p>
+        ) : (
+          <div className="products-grid products-grid--4">
+            {featured.map((product) => (
+              <ProductCard key={product.id} product={toCardData(product)} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── Banner artesanas ── */}
+      <section className="artisan-banner" id="historia">
+        <div className="artisan-banner-image">
+          <div className="hero-placeholder">
+            📷
+            <span>Artesana tejiendo</span>
+          </div>
+        </div>
+        <div className="artisan-banner-content">
+          <p className="artisan-banner-label">NUESTRA HISTORIA</p>
+          <blockquote className="artisan-banner-quote">
+            "Cada hilo lleva el amor y el conocimiento de mujeres que aprendieron a tejer de sus
+            madres y sus abuelas."
+          </blockquote>
+          <Link href="/#historia" className="btn-white">
+            Conoce nuestra historia →
+          </Link>
+        </div>
+      </section>
+
+      {/* ── Trust bar ── */}
+      <section className="trust-bar">
+        {TRUST_ITEMS.map((item) => (
+          <div key={item.title} className="trust-item">
+            <span className="trust-icon">{item.icon}</span>
+            <div>
+              <p className="trust-title">{item.title}</p>
+              <p className="trust-sub">{item.sub}</p>
+            </div>
+          </div>
+        ))}
+      </section>
     </div>
   )
 }

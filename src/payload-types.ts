@@ -69,6 +69,8 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    products: Product;
+    orders: Order;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,13 +80,15 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
   db: {
-    defaultIDType: string;
+    defaultIDType: number;
   };
   fallbackLocale: null;
   globals: {};
@@ -122,7 +126,8 @@ export interface UserAuthOperations {
  * via the `definition` "users".
  */
 export interface User {
-  id: string;
+  id: number;
+  role: 'admin' | 'customer';
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -147,7 +152,7 @@ export interface User {
  * via the `definition` "media".
  */
 export interface Media {
-  id: string;
+  id: number;
   alt: string;
   updatedAt: string;
   createdAt: string;
@@ -163,10 +168,172 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: number;
+  name: string;
+  /**
+   * Ej: "Telar Tenancingo" — aparece en las cards del catálogo
+   */
+  short?: string | null;
+  /**
+   * Identificador único en la URL. Ej: rebozo-telar-tenancingo
+   */
+  slug: string;
+  /**
+   * Ej: Tenancingo, Edo. Méx.
+   */
+  origin?: string | null;
+  category?: ('Telar' | 'Seda' | 'Algodón' | 'Bordados' | 'Lana') | null;
+  /**
+   * Ej: Algodón y seda
+   */
+  material?: string | null;
+  price: number;
+  /**
+   * Opcional. Si se llena, aparece tachado junto al precio actual
+   */
+  comparePrice?: number | null;
+  /**
+   * Badge que aparece sobre la imagen del producto
+   */
+  tag?: ('MÁS VENDIDO' | 'PREMIUM' | 'OFERTA' | 'NUEVO') | null;
+  colors?:
+    | {
+        /**
+         * Ej: #8B2252
+         */
+        hex: string;
+        id?: string | null;
+      }[]
+    | null;
+  sizes?:
+    | {
+        /**
+         * Ej: Clásico 170cm
+         */
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  careInstructions?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * La primera imagen es la principal. Las siguientes son la galería
+   */
+  images?:
+    | {
+        image: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Del 1 al 5. Se actualiza manualmente por ahora
+   */
+  rating?: number | null;
+  reviewCount?: number | null;
+  inStock?: boolean | null;
+  /**
+   * Aparece en la sección "Más vendidos" de la página de inicio
+   */
+  featured?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  /**
+   * Se llena automáticamente si el cliente tiene cuenta activa
+   */
+  customer?: (number | null) | User;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string | null;
+  address: {
+    street: string;
+    number?: string | null;
+    colonia?: string | null;
+    city: string;
+    state: string;
+    postalCode: string;
+  };
+  items?:
+    | {
+        /**
+         * Referencia al producto original
+         */
+        product?: (number | null) | Product;
+        /**
+         * Guardado al momento de la compra. No cambia aunque el producto se edite después.
+         */
+        productName: string;
+        size?: string | null;
+        qty: number;
+        /**
+         * Precio al momento de la compra. No cambia aunque el producto cambie de precio.
+         */
+        unitPrice: number;
+        id?: string | null;
+      }[]
+    | null;
+  subtotal: number;
+  /**
+   * Gratis si el subtotal supera $800 MXN
+   */
+  shippingCost: number;
+  total: number;
+  paymentMethod?: ('tarjeta' | 'oxxo' | 'transferencia') | null;
+  /**
+   * Se llena automáticamente cuando Stripe confirma el pago
+   */
+  stripePaymentIntentId?: string | null;
+  /**
+   * ID de la sesión de pago en Stripe
+   */
+  stripeSessionId?: string | null;
+  status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: string;
+  id: number;
   key: string;
   data:
     | {
@@ -183,20 +350,28 @@ export interface PayloadKv {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: string;
+  id: number;
   document?:
     | ({
         relationTo: 'users';
-        value: string | User;
+        value: number | User;
       } | null)
     | ({
         relationTo: 'media';
-        value: string | Media;
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: number | Product;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
       } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   updatedAt: string;
   createdAt: string;
@@ -206,10 +381,10 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: string;
+  id: number;
   user: {
     relationTo: 'users';
-    value: string | User;
+    value: number | User;
   };
   key?: string | null;
   value?:
@@ -229,7 +404,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: string;
+  id: number;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -240,6 +415,7 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -274,6 +450,86 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  name?: T;
+  short?: T;
+  slug?: T;
+  origin?: T;
+  category?: T;
+  material?: T;
+  price?: T;
+  comparePrice?: T;
+  tag?: T;
+  colors?:
+    | T
+    | {
+        hex?: T;
+        id?: T;
+      };
+  sizes?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  description?: T;
+  careInstructions?: T;
+  images?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
+  rating?: T;
+  reviewCount?: T;
+  inStock?: T;
+  featured?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  customer?: T;
+  customerName?: T;
+  customerEmail?: T;
+  customerPhone?: T;
+  address?:
+    | T
+    | {
+        street?: T;
+        number?: T;
+        colonia?: T;
+        city?: T;
+        state?: T;
+        postalCode?: T;
+      };
+  items?:
+    | T
+    | {
+        product?: T;
+        productName?: T;
+        size?: T;
+        qty?: T;
+        unitPrice?: T;
+        id?: T;
+      };
+  subtotal?: T;
+  shippingCost?: T;
+  total?: T;
+  paymentMethod?: T;
+  stripePaymentIntentId?: T;
+  stripeSessionId?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
