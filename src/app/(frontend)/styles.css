@@ -583,7 +583,8 @@ body {
 
 .hero-image {
   background: var(--pink-pale);
-  min-height: 480px;
+  height: 480px;
+  overflow: hidden;
 }
 
 .hero-placeholder {
@@ -806,7 +807,8 @@ body {
 }
 
 .artisan-banner-image {
-  min-height: 220px;
+  height: 220px;
+  overflow: hidden;
   background: #f5ead8;
 }
 

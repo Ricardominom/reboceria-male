@@ -10,6 +10,7 @@ import { Media } from './collections/Media'
 import { Products } from './collections/Products'
 import { Orders } from './collections/Orders'
 import { cloudinaryStorage } from 'payloadcms-storage-cloudinary'
+import { HomeSettings } from './globals/HomeSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -22,6 +23,7 @@ export default buildConfig({
     },
   },
   collections: [Users, Media, Products, Orders],
+  globals: [HomeSettings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

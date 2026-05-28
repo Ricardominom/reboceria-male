@@ -5,6 +5,7 @@ import type { Product, Media } from '@/payload-types'
 import ProductCard from '@/components/ProductCard'
 import type { ProductCardData } from '@/types'
 import { toCardData } from '@/lib/products'
+import ImageCarousel from '@/components/ImageCarousel'
 
 // ─── Datos estáticos ──────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -33,15 +34,34 @@ export default async function HomePage() {
     limit: 4,
   })
 
+  const homeSettings = await payload.findGlobal({
+    slug: 'home-settings',
+    depth: 1,
+  })
+
+  const heroUrls = (homeSettings.heroImages ?? [])
+    .map((item) =>
+      typeof item.image === 'object' && item.image ? (item.image as Media).url : null,
+    )
+    .filter((url): url is string => typeof url === 'string')
+
+  const artisanUrls = (homeSettings.artisanImages ?? [])
+    .map((item) =>
+      typeof item.image === 'object' && item.image ? (item.image as Media).url : null,
+    )
+    .filter((url): url is string => typeof url === 'string')
   return (
     <div>
       {/* ── Hero ── */}
       <section className="hero">
         <div className="hero-image">
-          <div className="hero-placeholder">
-            📷
-            <span>Fotografía principal</span>
-          </div>
+          {heroUrls.length > 0 ? (
+            <ImageCarousel images={heroUrls} height={480} alt="Rebozos Mary" />
+          ) : (
+            <div className="hero-placeholder">
+              📷<span>Fotografía principal</span>
+            </div>
+          )}
         </div>
 
         <div className="hero-content">
@@ -122,10 +142,13 @@ export default async function HomePage() {
       {/* ── Banner artesanas ── */}
       <section className="artisan-banner" id="historia">
         <div className="artisan-banner-image">
-          <div className="hero-placeholder">
-            📷
-            <span>Artesana tejiendo</span>
-          </div>
+          {artisanUrls.length > 0 ? (
+            <ImageCarousel images={artisanUrls} height={220} alt="Artesana tejiendo" />
+          ) : (
+            <div className="hero-placeholder">
+              📷<span>Artesana tejiendo</span>
+            </div>
+          )}
         </div>
         <div className="artisan-banner-content">
           <p className="artisan-banner-label">NUESTRA HISTORIA</p>
