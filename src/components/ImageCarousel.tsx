@@ -24,21 +24,54 @@ export default function ImageCarousel({ images, height, alt = '' }: Props) {
   return (
     <div style={{ position: 'relative', width: '100%', height, overflow: 'hidden' }}>
       {images.map((src, i) => (
-        <img
+        <div
           key={src}
-          src={src}
-          alt={`${alt} ${i + 1}`}
           style={{
             position: 'absolute',
             inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center top',
             opacity: i === current ? 1 : 0,
             transition: 'opacity 1s ease-in-out',
           }}
-        />
+        >
+          {/* Fondo difuminado */}
+          <img
+            src={src}
+            alt=""
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              filter: 'blur(18px)',
+              transform: 'scale(1.12)',
+              opacity: 0.75,
+            }}
+          />
+
+          {/* Capa oscura sobre el fondo */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(30, 8, 18, 0.45)',
+            }}
+          />
+
+          {/* Imagen principal nítida */}
+          <img
+            src={src}
+            alt={`${alt} ${i + 1}`}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+            }}
+          />
+        </div>
       ))}
 
       {images.length > 1 && (

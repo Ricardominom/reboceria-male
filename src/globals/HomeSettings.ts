@@ -8,32 +8,28 @@ export const HomeSettings: GlobalConfig = {
       name: 'heroImages',
       label: 'Imágenes del Hero (carrusel)',
       type: 'array',
+      labels: {
+        singular: 'Imagen',
+        plural: 'Imágenes',
+      },
       minRows: 1,
       maxRows: 6,
       fields: [
-        {
-          name: 'image',
-          label: 'Imagen',
-          type: 'upload',
-          relationTo: 'media',
-          required: true,
-        },
+        { name: 'image', label: 'Imagen', type: 'upload', relationTo: 'media', required: true },
       ],
     },
     {
       name: 'artisanImages',
       label: 'Imágenes banner artesanas (carrusel)',
       type: 'array',
+      labels: {
+        singular: 'Imagen',
+        plural: 'Imágenes',
+      },
       minRows: 1,
       maxRows: 6,
       fields: [
-        {
-          name: 'image',
-          label: 'Imagen',
-          type: 'upload',
-          relationTo: 'media',
-          required: true,
-        },
+        { name: 'image', label: 'Imagen', type: 'upload', relationTo: 'media', required: true },
       ],
     },
   ],

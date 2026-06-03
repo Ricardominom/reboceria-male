@@ -2,6 +2,10 @@ import type { CollectionConfig } from 'payload'
 
 export const Users: CollectionConfig = {
   slug: 'users',
+  labels: {
+    singular: 'Usuario',
+    plural: 'Usuarios',
+  },
   admin: {
     useAsTitle: 'email',
   },
@@ -9,6 +13,7 @@ export const Users: CollectionConfig = {
   fields: [
     {
       name: 'role',
+      label: 'Rol',
       type: 'select',
       required: true,
       defaultValue: 'customer',
