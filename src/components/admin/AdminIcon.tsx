@@ -2,16 +2,10 @@
 
 export default function AdminIcon() {
   return (
-    <span
-      style={{
-        fontFamily: '"Lora", Georgia, serif',
-        fontSize: 20,
-        fontWeight: 700,
-        fontStyle: 'italic',
-        color: '#c13584',
-      }}
-    >
-      RM
-    </span>
+    <img
+      src="/img/LOGO-REB-03.png"
+      alt="RM"
+      style={{ height: 32, width: 32, objectFit: 'contain' }}
+    />
   )
 }

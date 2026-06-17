@@ -8,7 +8,7 @@ export const Products: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'category', 'price', 'inStock', 'featured'],
+    defaultColumns: ['name', 'category', 'price', 'stock', 'inStock', 'featured'],
   },
   access: {
     read: () => true,
@@ -26,7 +26,10 @@ export const Products: CollectionConfig = {
       type: 'text',
       label: 'Nombre corto (para tarjetas)',
       admin: {
-        description: 'Ej: "Telar Tenancingo" — aparece en las cards del catálogo',
+        hidden: true,
+      },
+      hooks: {
+        beforeChange: [({ siblingData }) => siblingData.name],
       },
     },
     {
@@ -36,7 +39,19 @@ export const Products: CollectionConfig = {
       required: true,
       unique: true,
       admin: {
-        description: 'Identificador único en la URL. Ej: rebozo-telar-tenancingo',
+        hidden: true,
+      },
+      hooks: {
+        beforeChange: [
+          ({ siblingData }) =>
+            siblingData.name
+              ?.toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/[^a-z0-9\s-]/g, '')
+              .trim()
+              .replace(/\s+/g, '-'),
+        ],
       },
     },
 
@@ -181,10 +196,29 @@ export const Products: CollectionConfig = {
 
     //  Estado
     {
+      name: 'stock',
+      type: 'number',
+      label: 'Stock disponible',
+      defaultValue: 0,
+      min: 0,
+      admin: {
+        description: 'Número de unidades disponibles',
+      },
+    },
+    {
       name: 'inStock',
       type: 'checkbox',
       label: 'En stock',
       defaultValue: true,
+      admin: {
+        hidden: true,
+        components: {
+          Cell: '@/components/admin/InStockCell',
+        },
+      },
+      hooks: {
+        beforeChange: [({ siblingData }) => (siblingData.stock ?? 0) > 0],
+      },
     },
     {
       name: 'featured',

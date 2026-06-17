@@ -23,6 +23,7 @@
     "@payloadcms/next": "3.84.1",
     "@payloadcms/plugin-cloud-storage": "^3.84.1",
     "@payloadcms/richtext-lexical": "3.84.1",
+    "@payloadcms/translations": "^3.85.1",
     "@payloadcms/ui": "3.84.1",
     "cross-env": "^7.0.3",
     "dotenv": "16.4.7",
@@ -56,7 +57,7 @@
   },
   "engines": {
     "node": "^18.20.2 || >=20.9.0",
-    "pnpm": "^9 || ^10"
+    "pnpm": "^9 || ^10 || ^11"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -17,7 +17,7 @@ export default function BeforeLogin() {
       >
         Panel exclusivo para el equipo de Rebozos Mary.
         <br />
-        Si no tienes acceso, contacta a la administradora.
+        Si no tienes acceso, contacta al administrador.
       </p>
     </div>
   )

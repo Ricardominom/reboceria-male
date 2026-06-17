@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useCart } from '@/store/cart'
+import Image from 'next/image'
 
 // ─── PromoBar ────────────────────────────────────────────────────────────────
 
@@ -26,33 +27,6 @@ function PromoBar() {
     <div className="promo-bar">
       <span key={index}>{messages[index]}</span>
     </div>
-  )
-}
-
-// ─── Logo SVG ─────────────────────────────────────────────────────────────────
-
-function Logo({ size = 34 }: { size?: number }) {
-  const color = '#C13584'
-  const angles = [0, 60, 120, 180, 240, 300]
-
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
-      <circle cx="50" cy="50" r="47" stroke={color} strokeWidth="3" fill="none" />
-      <circle cx="50" cy="50" r="34" stroke={color} strokeWidth="1.5" fill="none" opacity="0.35" />
-      <circle cx="50" cy="50" r="8" fill={color} opacity="0.85" />
-      {angles.map((a) => (
-        <line
-          key={a}
-          x1={50 + 10 * Math.cos((a * Math.PI) / 180)}
-          y1={50 + 10 * Math.sin((a * Math.PI) / 180)}
-          x2={50 + 32 * Math.cos((a * Math.PI) / 180)}
-          y2={50 + 32 * Math.sin((a * Math.PI) / 180)}
-          stroke={color}
-          strokeWidth="1.5"
-          opacity="0.45"
-        />
-      ))}
-    </svg>
   )
 }
 
@@ -89,7 +63,7 @@ export default function Navbar() {
       <nav className="navbar">
         {/* Logo */}
         <Link href="/" className="navbar-logo">
-          <Logo />
+          <Image src="/img/LOGO-REB-03.png" alt="Rebozos Mary" width={40} height={40} />
           <div>
             <div className="navbar-brand">Rebozos Mary</div>
             <div className="navbar-tagline">ARTESANÍAS MEXICANAS</div>

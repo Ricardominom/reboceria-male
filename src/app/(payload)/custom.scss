@@ -1,0 +1,48 @@
+.login__brand {
+  margin-bottom: 0;
+}
+
+.list-header__title-actions {
+  margin-left: auto;
+}
+
+.list-selection__actions .btn {
+  background-color: #c13584;
+  color: white;
+  border-radius: 6px;
+  padding: 6px 14px;
+}
+
+.delete-documents__toggle {
+  background-color: #c0392b !important;
+}
+
+.list-create-new-doc__create-new-button {
+  background-color: #c13584;
+  color: white;
+  font-weight: 700;
+}
+
+.list-header .list-header__content {
+  display: flex;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.list-header .list-header__title-and-actions {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.list-header .list-header__actions {
+  margin-top: 8px !important;
+}
+
+.list-create-new-doc__create-new-button .btn__label {
+  font-size: 20px !important;
+}
+
+.app-header__account {
+  text-decoration: none;
+}

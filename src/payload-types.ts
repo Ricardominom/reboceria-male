@@ -131,6 +131,8 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: number;
+  firstName?: string | null;
+  lastName?: string | null;
   role: 'admin' | 'customer';
   updatedAt: string;
   createdAt: string;
@@ -177,13 +179,7 @@ export interface Media {
 export interface Product {
   id: number;
   name: string;
-  /**
-   * Ej: "Telar Tenancingo" — aparece en las cards del catálogo
-   */
   short?: string | null;
-  /**
-   * Identificador único en la URL. Ej: rebozo-telar-tenancingo
-   */
   slug: string;
   /**
    * Ej: Tenancingo, Edo. Méx.
@@ -265,6 +261,10 @@ export interface Product {
    */
   rating?: number | null;
   reviewCount?: number | null;
+  /**
+   * Número de unidades disponibles
+   */
+  stock?: number | null;
   inStock?: boolean | null;
   /**
    * Aparece en la sección "Más vendidos" de la página de inicio
@@ -419,6 +419,8 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  firstName?: T;
+  lastName?: T;
   role?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -491,6 +493,7 @@ export interface ProductsSelect<T extends boolean = true> {
       };
   rating?: T;
   reviewCount?: T;
+  stock?: T;
   inStock?: T;
   featured?: T;
   updatedAt?: T;

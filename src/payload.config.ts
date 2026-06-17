@@ -11,6 +11,7 @@ import { Products } from './collections/Products'
 import { Orders } from './collections/Orders'
 import { cloudinaryStorage } from 'payloadcms-storage-cloudinary'
 import { HomeSettings } from './globals/HomeSettings'
+import { es } from '@payloadcms/translations/languages/es'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -18,6 +19,9 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     user: Users.slug,
+    meta: {
+      icons: [{ url: '/img/LOGO-REB-03.png' }],
+    },
     importMap: {
       baseDir: path.resolve(dirname),
     },
@@ -29,6 +33,9 @@ export default buildConfig({
       providers: ['@/components/admin/AdminProvider'],
       beforeNavLinks: ['@/components/admin/ThemeToggle'],
       beforeLogin: ['@/components/admin/BeforeLogin'],
+    },
+    avatar: {
+      Component: '@/components/admin/Avatar',
     },
   },
   collections: [Users, Media, Products, Orders],
@@ -45,9 +52,10 @@ export default buildConfig({
   }),
   sharp,
   i18n: {
-    fallbackLanguage: 'en',
+    fallbackLanguage: 'es',
+    supportedLanguages: { es },
     translations: {
-      en: {
+      es: {
         authentication: {
           login: 'Iniciar sesión',
           emailOrUsername: 'Correo electrónico',
@@ -63,52 +71,15 @@ export default buildConfig({
           loggedOut: 'Sesión cerrada correctamente.',
           successfullyLoggedIn: 'Sesión iniciada correctamente.',
         },
-        fields: {
-          collapseAll: 'Contraer todo',
-          showAll: 'Mostrar todo',
-          addLabel: 'Agregar {{label}}',
-          moreOptions: 'Más opciones',
-        },
-        upload: {
-          filename: 'Nombre de archivo',
-          filesize: 'Tamaño',
-          width: 'Ancho',
-          height: 'Alto',
-          addFile: 'Agregar archivo',
-          dragAndDrop: 'Arrastra y suelta o',
-          selectFile: 'selecciona un archivo',
-          pasteURL: 'Pegar URL',
-          uploadFile: 'Subir archivo',
-        },
         general: {
           dashboard: 'Panel de control',
           welcome: 'Bienvenida',
-          submit: 'Enviar',
-          save: 'Guardar',
-          cancel: 'Cancelar',
-          delete: 'Eliminar',
-          confirm: 'Confirmar',
-          edit: 'Editar',
-          search: 'Buscar',
-          loading: 'Cargando...',
-          noResults: 'Sin resultados',
-          create: 'Crear',
-          filters: 'Filtros',
-          of: 'de',
           collections: 'Contenido',
           globals: 'Configuración',
-          createNew: 'Crear',
-          columns: 'Columnas',
-          updatedAt: 'Actualizado',
-          createdAt: 'Creado',
-          searchBy: 'Buscar por {{label}}',
-          perPage: 'Por página',
-          rowsPerPage: 'Por página',
-          editingLabel: 'Editando',
-          editAll: 'Editar lista',
-          collapseAll: 'Contraer todo',
-          showAll: 'Mostrar todo',
-          addLabel: 'Agregar',
+          createNew: 'Crear nuevo',
+          creatingNewLabel: 'Nuevo {{label}}',
+          untitled: 'Sin título',
+          noLabel: '<Sin {{label}}>',
         },
       },
     },
