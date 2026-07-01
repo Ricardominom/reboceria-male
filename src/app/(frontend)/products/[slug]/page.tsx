@@ -52,6 +52,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     images: (product.images ?? [])
       .map((i) => (typeof i.image !== 'number' ? (i.image as Media).url : null))
       .filter((url): url is string => url !== null),
+    stock: product.stock,
   }
 
   return (

@@ -21,6 +21,7 @@ export interface ProductCardData {
   reviewCount: number | null | undefined
   image: string | null
   sizes: string[]
+  stock: number | null | undefined
 }
 
 export interface ProductDetailData {
@@ -39,4 +40,5 @@ export interface ProductDetailData {
   colors: string[]
   sizes: string[]
   images: string[]
+  stock: number | null | undefined
 }

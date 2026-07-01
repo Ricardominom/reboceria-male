@@ -137,6 +137,19 @@ export default function ProductDetail({ product }: { product: ProductDetailData 
             )}
           </div>
 
+          {typeof product.stock === 'number' && product.stock > 0 && product.stock <= 3 && (
+            <p
+              style={{
+                color: '#b45309',
+                fontWeight: 600,
+                fontSize: 14,
+                margin: '4px 0 0',
+              }}
+            >
+              ¡Últimas {product.stock} piezas!
+            </p>
+          )}
+
           {/* Material */}
           {product.material && (
             <div className="product-detail-section">

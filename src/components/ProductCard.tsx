@@ -47,6 +47,12 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
             {product.tag}
           </span>
         )}
+
+        {typeof product.stock === 'number' && product.stock > 0 && product.stock <= 3 && (
+          <span className="product-tag" style={{ background: '#b45309', bottom: 8, top: 'auto' }}>
+            ¡Últimas {product.stock} piezas!
+          </span>
+        )}
       </Link>
 
       {/* Info */}

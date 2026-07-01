@@ -21,6 +21,7 @@ export function toCardData(product: Product): ProductCardData {
     reviewCount: product.reviewCount,
     image: getFirstImageUrl(product),
     sizes: product.sizes?.map((s) => s.label) ?? [],
+    stock: product.stock,
   }
 }
 
