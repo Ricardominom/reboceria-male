@@ -3,6 +3,7 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { stripe } from '@/lib/stripe'
+import { sendOrderConfirmation } from '@/lib/email'
 
 export type CreateOrderInput = {
   nombre: string
@@ -18,6 +19,7 @@ export type CreateOrderInput = {
   items: Array<{
     productId: number
     productName: string
+    color: string
     size: string
     qty: number
     unitPrice: number
@@ -25,11 +27,37 @@ export type CreateOrderInput = {
   subtotal: number
   shippingCost: number
   total: number
+  bankDetails?: {
+    bankName: string
+    bankHolder: string
+    bankClabe: string
+    transferNotes: string
+  }
 }
 
 export async function createOrder(input: CreateOrderInput) {
   try {
     const payload = await getPayload({ config: await config })
+
+    // Verificar stock disponible
+    for (const item of input.items) {
+      const product = await payload.findByID({
+        collection: 'products',
+        id: item.productId,
+        depth: 1,
+      })
+      const variant = (product.variants ?? []).find((v) => {
+        const c = typeof v.color === 'number' ? null : (v.color as any)
+        return c?.name === item.color
+      })
+      const sizeData = (variant?.sizes ?? []).find((s: any) => s.label === item.size)
+      if (!variant || !sizeData || (sizeData.stock ?? 0) < item.qty) {
+        return {
+          success: false as const,
+          error: `"${item.productName} — ${item.color}" ya no tiene stock suficiente.`,
+        }
+      }
+    }
 
     // 1. Crear el pedido en Payload
     const order = await payload.create({
@@ -49,6 +77,7 @@ export async function createOrder(input: CreateOrderInput) {
         items: input.items.map((item) => ({
           product: item.productId,
           productName: item.productName,
+          color: item.color,
           size: item.size,
           qty: item.qty,
           unitPrice: item.unitPrice,
@@ -61,13 +90,36 @@ export async function createOrder(input: CreateOrderInput) {
       },
     })
 
+    // Enviar email de confirmación (no bloquea el flujo si falla)
+    if (input.paymentMethod === 'transferencia') {
+      sendOrderConfirmation({
+        to: input.email,
+        customerName: input.nombre,
+        orderId: order.id,
+        items: input.items,
+        subtotal: input.subtotal,
+        shippingCost: input.shippingCost,
+        total: input.total,
+        paymentMethod: input.paymentMethod,
+        address: {
+          street: input.calle,
+          number: input.numero,
+          colonia: input.colonia,
+          city: input.ciudad,
+          state: input.estado,
+          postalCode: input.cp,
+        },
+        bankDetails: input.bankDetails,
+      }).catch((err) => console.error('Error enviando email de confirmación:', err))
+    }
+
     // 2. Transferencia bancaria → sin Stripe, confirmación directa
     if (input.paymentMethod === 'transferencia') {
       return { success: true as const, orderId: order.id, stripeUrl: null }
     }
 
     // 3. Tarjeta u OXXO → crear sesión de Stripe
-    const baseUrl = process.env.NEXT_PUBLIC_URL!
+    const baseUrl = process.env.NEXT_PUBLIC_URL ?? 'http://localhost:3000'
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -79,7 +131,7 @@ export async function createOrder(input: CreateOrderInput) {
         ...input.items.map((item) => ({
           price_data: {
             currency: 'mxn',
-            product_data: { name: `${item.productName} — ${item.size}` },
+            product_data: { name: `${item.productName} — ${item.color} / ${item.size}` },
             unit_amount: Math.round(item.unitPrice * 100), // Stripe maneja centavos
           },
           quantity: item.qty,

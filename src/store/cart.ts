@@ -5,8 +5,8 @@ import type { CartItem } from '@/types'
 interface CartStore {
   items: CartItem[]
   addItem: (item: Omit<CartItem, 'qty'>) => void
-  removeItem: (id: number, size: string) => void
-  updateQty: (id: number, size: string, qty: number) => void
+  removeItem: (id: number, size: string, color: string) => void
+  updateQty: (id: number, size: string, color: string, qty: number) => void
   clearCart: () => void
   itemCount: () => number
   subtotal: () => number
@@ -22,11 +22,15 @@ export const useCart = create<CartStore>()(
 
       addItem: (incoming) => {
         set((state) => {
-          const existing = state.items.find((i) => i.id === incoming.id && i.size === incoming.size)
+          const existing = state.items.find(
+            (i) => i.id === incoming.id && i.size === incoming.size && i.color === incoming.color,
+          )
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.id === incoming.id && i.size === incoming.size ? { ...i, qty: i.qty + 1 } : i,
+                i.id === incoming.id && i.size === incoming.size && i.color === incoming.color
+                  ? { ...i, qty: i.qty + 1 }
+                  : i,
               ),
             }
           }
@@ -34,19 +38,21 @@ export const useCart = create<CartStore>()(
         })
       },
 
-      removeItem: (id, size) => {
+      removeItem: (id, size, color) => {
         set((state) => ({
-          items: state.items.filter((i) => !(i.id === id && i.size === size)),
+          items: state.items.filter((i) => !(i.id === id && i.size === size && i.color === color)),
         }))
       },
 
-      updateQty: (id, size, qty) => {
+      updateQty: (id, size, color, qty) => {
         if (qty <= 0) {
-          get().removeItem(id, size)
+          get().removeItem(id, size, color)
           return
         }
         set((state) => ({
-          items: state.items.map((i) => (i.id === id && i.size === size ? { ...i, qty } : i)),
+          items: state.items.map((i) =>
+            i.id === id && i.size === size && i.color === color ? { ...i, qty } : i,
+          ),
         }))
       },
 

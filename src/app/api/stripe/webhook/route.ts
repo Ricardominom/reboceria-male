@@ -3,10 +3,37 @@ import Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { sendOrderConfirmation } from '@/lib/email'
 
-// Importante: desactivar el body parser de Next.js
-// Stripe necesita el body RAW (sin parsear) para verificar la firma
 export const runtime = 'nodejs'
+
+async function reduceVariantStock(payload: any, item: any) {
+  const productId = typeof item.product === 'object' ? item.product?.id : item.product
+  if (!productId) return
+
+  const product = await payload.findByID({ collection: 'products', id: productId, depth: 1 })
+
+  const updatedVariants = (product.variants ?? []).map((v: any) => {
+    const colorName = typeof v.color === 'object' ? v.color?.name : null
+    const colorId = typeof v.color === 'object' ? v.color?.id : v.color
+    return {
+      ...v,
+      color: colorId,
+      stock:
+        colorName === item.color ? Math.max(0, (v.stock ?? 0) - (item.qty ?? 0)) : (v.stock ?? 0),
+      images: (v.images ?? []).map((img: any) => ({
+        ...img,
+        image: typeof img.image === 'object' ? img.image?.id : img.image,
+      })),
+    }
+  })
+
+  await payload.update({
+    collection: 'products',
+    id: productId,
+    data: { variants: updatedVariants },
+  })
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
@@ -25,7 +52,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Firma inválida' }, { status: 400 })
   }
 
-  // Pago completado (tarjeta o OXXO confirmado)
+  // Pago completado (tarjeta)
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
 
@@ -39,7 +66,6 @@ export async function POST(req: NextRequest) {
     if (orderId) {
       const payload = await getPayload({ config: await config })
 
-      // Actualizar status de la orden
       await payload.update({
         collection: 'orders',
         id: Number(orderId),
@@ -51,7 +77,6 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      // Reducir stock por cada producto comprado
       const order = await payload.findByID({
         collection: 'orders',
         id: Number(orderId),
@@ -59,29 +84,40 @@ export async function POST(req: NextRequest) {
       })
 
       if (order?.items?.length) {
-        await Promise.all(
-          order.items.map(async (item: any) => {
-            const productId = typeof item.product === 'object' ? item.product?.id : item.product
-            if (!productId) return
-
-            const product = await payload.findByID({ collection: 'products', id: productId })
-            const newStock = Math.max(0, (product.stock ?? 0) - (item.qty ?? 0))
-
-            await payload.update({
-              collection: 'products',
-              id: productId,
-              data: { stock: newStock },
-            })
-          }),
-        )
+        await Promise.all(order.items.map((item: any) => reduceVariantStock(payload, item)))
         console.log(`✓ Stock actualizado para pedido #${orderId}`)
+
+        sendOrderConfirmation({
+          to: order.customerEmail,
+          customerName: order.customerName,
+          orderId: order.id,
+          items: order.items.map((item: any) => ({
+            productName: item.productName,
+            color: item.color ?? '',
+            size: item.size ?? 'Único',
+            qty: item.qty,
+            unitPrice: item.unitPrice,
+          })),
+          subtotal: order.subtotal,
+          shippingCost: order.shippingCost,
+          total: order.total,
+          paymentMethod: 'tarjeta',
+          address: {
+            street: order.address?.street,
+            number: order.address?.number ?? undefined,
+            colonia: order.address?.colonia ?? undefined,
+            city: order.address?.city,
+            state: order.address?.state,
+            postalCode: order.address?.postalCode,
+          },
+        }).catch((err) => console.error('Error enviando email post-pago:', err))
       }
 
       console.log(`✓ Pedido #${orderId} marcado como pagado`)
     }
   }
 
-  // Pago OXXO confirmado (el dinero llegó)
+  // Pago OXXO confirmado
   if (event.type === 'checkout.session.async_payment_succeeded') {
     const session = event.data.object as Stripe.Checkout.Session
     const orderId = session.metadata?.orderId
@@ -107,24 +143,34 @@ export async function POST(req: NextRequest) {
       })
 
       if (order?.items?.length) {
-        await Promise.all(
-          order.items.map(async (item: any) => {
-            const productId = typeof item.product === 'object' ? item.product?.id : item.product
-            if (!productId) return
+        await Promise.all(order.items.map((item: any) => reduceVariantStock(payload, item)))
+        console.log(`✓ Pedido OXXO #${orderId} confirmado y stock actualizado`)
 
-            const product = await payload.findByID({ collection: 'products', id: productId })
-            const newStock = Math.max(0, (product.stock ?? 0) - (item.qty ?? 0))
-
-            await payload.update({
-              collection: 'products',
-              id: productId,
-              data: { stock: newStock },
-            })
-          }),
-        )
+        sendOrderConfirmation({
+          to: order.customerEmail,
+          customerName: order.customerName,
+          orderId: order.id,
+          items: order.items.map((item: any) => ({
+            productName: item.productName,
+            color: item.color ?? '',
+            size: item.size ?? 'Único',
+            qty: item.qty,
+            unitPrice: item.unitPrice,
+          })),
+          subtotal: order.subtotal,
+          shippingCost: order.shippingCost,
+          total: order.total,
+          paymentMethod: 'oxxo',
+          address: {
+            street: order.address?.street,
+            number: order.address?.number ?? undefined,
+            colonia: order.address?.colonia ?? undefined,
+            city: order.address?.city,
+            state: order.address?.state,
+            postalCode: order.address?.postalCode,
+          },
+        }).catch((err) => console.error('Error enviando email post-pago:', err))
       }
-
-      console.log(`✓ Pedido OXXO #${orderId} confirmado y stock actualizado`)
     }
   }
 

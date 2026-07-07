@@ -46,3 +46,10 @@
 .app-header__account {
   text-decoration: none;
 }
+
+.btn-add--disabled,
+.btn-add-large--disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}

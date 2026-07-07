@@ -8,24 +8,25 @@ import Image from 'next/image'
 
 // ─── PromoBar ────────────────────────────────────────────────────────────────
 
-function PromoBar() {
-  const messages = [
+function PromoBar({ messages }: { messages: string[] }) {
+  const defaultMessages = [
     '🎁 ENVÍO GRATIS en compras mayores a $800 MXN · Toda la República',
     '✨ Nueva colección primavera 2026 — Descubre los diseños exclusivos',
     '🤝 Apoyamos a más de 50 artesanas mexicanas directamente',
   ]
+  const list = messages.length > 0 ? messages : defaultMessages
   const [index, setIndex] = useState(0)
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setIndex((i) => (i + 1) % messages.length)
+      setIndex((i) => (i + 1) % list.length)
     }, 3500)
     return () => clearInterval(timer)
-  }, [])
+  }, [list.length])
 
   return (
     <div className="promo-bar">
-      <span key={index}>{messages[index]}</span>
+      <span key={index}>{list[index]}</span>
     </div>
   )
 }
@@ -34,16 +35,18 @@ function PromoBar() {
 
 const NAV_LINKS = [
   { label: 'Inicio', href: '/' },
-  { label: 'Colección', href: '/catalog' },
-  { label: 'Historia', href: '/#historia' },
+  { label: 'Colecciones', href: '/catalog' },
+  { label: 'Tipos de Rebozo', href: '/#categorias' },
+  { label: 'Mi pedido', href: '/orders' },
   { label: 'Contacto', href: '/#contacto' },
 ]
 
-export default function Navbar() {
+export default function Navbar({ promoMessages = [] }: { promoMessages?: string[] }) {
   const pathname = usePathname()
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const itemCount = useCart((s) => s.itemCount())
   const openCart = useCart((s) => s.openCart)
@@ -59,7 +62,7 @@ export default function Navbar() {
 
   return (
     <>
-      <PromoBar />
+      <PromoBar messages={promoMessages} />
       <nav className="navbar">
         {/* Logo */}
         <Link href="/" className="navbar-logo">
@@ -106,30 +109,49 @@ export default function Navbar() {
               </button>
             </form>
           ) : (
-            <button onClick={() => setSearchOpen(true)} className="btn-search">
+            <button onClick={() => setSearchOpen(true)} className="btn-icon" aria-label="Buscar">
               <svg
-                width="14"
-                height="14"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2.5"
+                strokeWidth="1.8"
               >
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.35-4.35" />
               </svg>
-              Buscar
             </button>
           )}
 
-          {/* Carrito */}
-          <button onClick={openCart} className="btn-cart">
+          {/* Perfil */}
+          <Link href="/orders" className="btn-icon" aria-label="Mi cuenta">
             <svg
-              width="22"
-              height="22"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="var(--pink)"
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+            </svg>
+          </Link>
+
+          {/* Carrito */}
+          <button
+            onClick={openCart}
+            className="btn-icon"
+            aria-label="Carrito"
+            style={{ position: 'relative' }}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
               strokeWidth="1.8"
             >
               <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
@@ -138,8 +160,33 @@ export default function Navbar() {
             </svg>
             {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
           </button>
+
+          {/* Hamburger — solo móvil */}
+          <button
+            className="btn-hamburger"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label="Menú"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
         </div>
       </nav>
+      {menuOpen && (
+        <div className="mobile-menu">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="mobile-menu-link"
+              onClick={() => setMenuOpen(false)}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      )}
     </>
   )
 }

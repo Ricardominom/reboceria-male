@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 interface Props {
   images: string[]
-  height: number
+  height: number | string
   alt?: string
 }
 
@@ -68,7 +68,7 @@ export default function ImageCarousel({ images, height, alt = '' }: Props) {
               inset: 0,
               width: '100%',
               height: '100%',
-              objectFit: 'contain',
+              objectFit: 'cover',
             }}
           />
         </div>

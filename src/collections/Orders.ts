@@ -127,6 +127,11 @@ export const Orders: CollectionConfig = {
           },
         },
         {
+          name: 'color',
+          type: 'text',
+          label: 'Color',
+        },
+        {
           name: 'size',
           type: 'text',
           label: 'Talla',

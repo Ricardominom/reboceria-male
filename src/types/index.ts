@@ -1,8 +1,16 @@
+export interface Variant {
+  colorName: string
+  colorHex: string | null
+  images: string[]
+  sizes: { label: string; price: number; stock: number }[]
+}
+
 export interface CartItem {
   id: number
   name: string
   short: string
   price: number
+  color: string
   size: string
   image: string | null
   qty: number
@@ -20,8 +28,9 @@ export interface ProductCardData {
   rating: number | null | undefined
   reviewCount: number | null | undefined
   image: string | null
+  color: string
   sizes: string[]
-  stock: number | null | undefined
+  stock: number
 }
 
 export interface ProductDetailData {
@@ -37,8 +46,5 @@ export interface ProductDetailData {
   material: string | null | undefined
   description: string
   careInstructions: string
-  colors: string[]
-  sizes: string[]
-  images: string[]
-  stock: number | null | undefined
+  variants: Variant[]
 }

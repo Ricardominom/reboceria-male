@@ -2,7 +2,6 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 
-const CATEGORIES = ['Todas', 'Telar', 'Seda', 'Algodón', 'Bordados', 'Lana']
 const SORT_OPTIONS = [
   { value: 'relevancia', label: 'Relevancia' },
   { value: 'precio-asc', label: 'Precio: menor a mayor' },
@@ -15,6 +14,7 @@ interface Props {
   currentSort: string
   currentMaxPrice: number
   searchQuery: string
+  categories: string[]
 }
 
 export default function CatalogFilters({
@@ -22,6 +22,7 @@ export default function CatalogFilters({
   currentSort,
   currentMaxPrice,
   searchQuery,
+  categories,
 }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -53,7 +54,7 @@ export default function CatalogFilters({
       <div className="filter-group">
         <p className="filter-label">CATEGORÍA</p>
         <div className="filter-options">
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => updateParam('category', cat)}

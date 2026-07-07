@@ -67,6 +67,8 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    categories: Category;
+    colors: Color;
     users: User;
     media: Media;
     products: Product;
@@ -78,6 +80,8 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    colors: ColorsSelect<false> | ColorsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
@@ -93,9 +97,11 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'home-settings': HomeSetting;
+    'store-settings': StoreSetting;
   };
   globalsSelect: {
     'home-settings': HomeSettingsSelect<false> | HomeSettingsSelect<true>;
+    'store-settings': StoreSettingsSelect<false> | StoreSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -127,6 +133,69 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  name: string;
+  /**
+   * Ej: Suave, fresco y ligero
+   */
+  description?: string | null;
+  /**
+   * Ej: 🧵
+   */
+  icon?: string | null;
+  /**
+   * Ej: #F8D7EA
+   */
+  chipColor?: string | null;
+  /**
+   * Ej: #C13584
+   */
+  chipTextColor?: string | null;
+  /**
+   * Foto representativa que aparece en el home
+   */
+  image?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  alt: string;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "colors".
+ */
+export interface Color {
+  id: number;
+  /**
+   * Ej: Azul, Negro, Café, Palomo
+   */
+  name: string;
+  hex?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -155,25 +224,6 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "products".
  */
 export interface Product {
@@ -185,7 +235,7 @@ export interface Product {
    * Ej: Tenancingo, Edo. Méx.
    */
   origin?: string | null;
-  category?: ('Telar' | 'Seda' | 'Algodón' | 'Bordados' | 'Lana') | null;
+  category?: (number | null) | Category;
   /**
    * Ej: Algodón y seda
    */
@@ -199,21 +249,26 @@ export interface Product {
    * Badge que aparece sobre la imagen del producto
    */
   tag?: ('MÁS VENDIDO' | 'PREMIUM' | 'OFERTA' | 'NUEVO') | null;
-  colors?:
+  variants?:
     | {
-        /**
-         * Ej: #8B2252
-         */
-        hex: string;
-        id?: string | null;
-      }[]
-    | null;
-  sizes?:
-    | {
-        /**
-         * Ej: Clásico 170cm
-         */
-        label: string;
+        color: number | Color;
+        images?:
+          | {
+              image: number | Media;
+              id?: string | null;
+            }[]
+          | null;
+        sizes?:
+          | {
+              /**
+               * Ej: Chica, Grande, Único, 170cm
+               */
+              label: string;
+              price: number;
+              stock?: number | null;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -248,23 +303,10 @@ export interface Product {
     [k: string]: unknown;
   } | null;
   /**
-   * La primera imagen es la principal. Las siguientes son la galería
-   */
-  images?:
-    | {
-        image: number | Media;
-        id?: string | null;
-      }[]
-    | null;
-  /**
    * Del 1 al 5. Se actualiza manualmente por ahora
    */
   rating?: number | null;
   reviewCount?: number | null;
-  /**
-   * Número de unidades disponibles
-   */
-  stock?: number | null;
   inStock?: boolean | null;
   /**
    * Aparece en la sección "Más vendidos" de la página de inicio
@@ -304,6 +346,7 @@ export interface Order {
          * Guardado al momento de la compra. No cambia aunque el producto se edite después.
          */
         productName: string;
+        color?: string | null;
         size?: string | null;
         qty: number;
         /**
@@ -356,6 +399,14 @@ export interface PayloadKv {
 export interface PayloadLockedDocument {
   id: number;
   document?:
+    | ({
+        relationTo: 'categories';
+        value: number | Category;
+      } | null)
+    | ({
+        relationTo: 'colors';
+        value: number | Color;
+      } | null)
     | ({
         relationTo: 'users';
         value: number | User;
@@ -416,6 +467,30 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  icon?: T;
+  chipColor?: T;
+  chipTextColor?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "colors_select".
+ */
+export interface ColorsSelect<T extends boolean = true> {
+  name?: T;
+  hex?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
@@ -471,29 +546,30 @@ export interface ProductsSelect<T extends boolean = true> {
   price?: T;
   comparePrice?: T;
   tag?: T;
-  colors?:
+  variants?:
     | T
     | {
-        hex?: T;
-        id?: T;
-      };
-  sizes?:
-    | T
-    | {
-        label?: T;
+        color?: T;
+        images?:
+          | T
+          | {
+              image?: T;
+              id?: T;
+            };
+        sizes?:
+          | T
+          | {
+              label?: T;
+              price?: T;
+              stock?: T;
+              id?: T;
+            };
         id?: T;
       };
   description?: T;
   careInstructions?: T;
-  images?:
-    | T
-    | {
-        image?: T;
-        id?: T;
-      };
   rating?: T;
   reviewCount?: T;
-  stock?: T;
   inStock?: T;
   featured?: T;
   updatedAt?: T;
@@ -523,6 +599,7 @@ export interface OrdersSelect<T extends boolean = true> {
     | {
         product?: T;
         productName?: T;
+        color?: T;
         size?: T;
         qty?: T;
         unitPrice?: T;
@@ -596,6 +673,61 @@ export interface HomeSetting {
         id?: string | null;
       }[]
     | null;
+  testimonialImages?:
+    | {
+        image: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  giftIdeas?:
+    | {
+        icon: string;
+        /**
+         * Ej: Para mamá
+         */
+        label: string;
+        sub: string;
+        /**
+         * Ej: #FDF0F7
+         */
+        backgroundColor?: string | null;
+        /**
+         * Ej: #C13584
+         */
+        textColor?: string | null;
+        category?: (number | null) | Category;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "store-settings".
+ */
+export interface StoreSetting {
+  id: number;
+  /**
+   * Ej: BBVA, Banamex, HSBC
+   */
+  bankName?: string | null;
+  bankHolder?: string | null;
+  bankClabe?: string | null;
+  bankAccount?: string | null;
+  /**
+   * Ej: Enviar comprobante al WhatsApp...
+   */
+  transferNotes?: string | null;
+  /**
+   * Aparecen rotando en la barra rosada del tope de la página
+   */
+  promoMessages?:
+    | {
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -614,6 +746,43 @@ export interface HomeSettingsSelect<T extends boolean = true> {
     | T
     | {
         image?: T;
+        id?: T;
+      };
+  testimonialImages?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
+  giftIdeas?:
+    | T
+    | {
+        icon?: T;
+        label?: T;
+        sub?: T;
+        backgroundColor?: T;
+        textColor?: T;
+        category?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "store-settings_select".
+ */
+export interface StoreSettingsSelect<T extends boolean = true> {
+  bankName?: T;
+  bankHolder?: T;
+  bankClabe?: T;
+  bankAccount?: T;
+  transferNotes?: T;
+  promoMessages?:
+    | T
+    | {
+        text?: T;
         id?: T;
       };
   updatedAt?: T;

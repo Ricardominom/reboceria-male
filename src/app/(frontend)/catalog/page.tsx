@@ -3,6 +3,31 @@ import config from '@/payload.config'
 import { toCardData } from '@/lib/products'
 import ProductCard from '@/components/ProductCard'
 import CatalogFilters from '@/components/CatalogFilters'
+import type { Metadata } from 'next'
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; q?: string }>
+}): Promise<Metadata> {
+  const params = await searchParams
+  const category = params.category
+  const q = params.q
+
+  let title = 'Colección — Rebozos Mary'
+  let description =
+    'Explora nuestra colección de rebozos artesanales tejidos a mano por artesanas mexicanas. Envío a toda la República.'
+
+  if (category) {
+    title = `Rebozos de ${category} — Rebozos Mary`
+    description = `Descubre nuestra colección de rebozos ${category} tejidos a mano. Arte textil mexicano con envío a toda la República.`
+  } else if (q) {
+    title = `"${q}" — Rebozos Mary`
+    description = `Resultados para "${q}" en nuestra colección de rebozos artesanales mexicanos.`
+  }
+
+  return { title, description }
+}
 
 export default async function CatalogPage({
   searchParams,
@@ -12,6 +37,7 @@ export default async function CatalogPage({
     category?: string
     sort?: string
     maxPrice?: string
+    page?: string
   }>
 }) {
   const params = await searchParams
@@ -19,12 +45,26 @@ export default async function CatalogPage({
   const category = params.category ?? 'Todas'
   const sort = params.sort ?? 'relevancia'
   const maxPrice = Number(params.maxPrice ?? 5000)
+  const page = Math.max(1, Number(params.page ?? 1))
+  const limit = 12
+  const payload = await getPayload({ config: await config })
+
+  // ─── Construcción del filtro para Payload ────────────────────────────────
+  // Fetch categorías dinámicas
+  const { docs: allCategories } = await payload.find({
+    collection: 'categories',
+    limit: 100,
+    sort: 'name',
+  })
 
   // ─── Construcción del filtro para Payload ────────────────────────────────
   const where: Record<string, unknown> = {}
 
   if (category !== 'Todas') {
-    where.category = { equals: category }
+    const matched = allCategories.find((c) => c.name === category)
+    if (matched) {
+      where.category = { equals: matched.id }
+    }
   }
   if (q) {
     where.or = [{ name: { like: q } }, { origin: { like: q } }]
@@ -43,13 +83,17 @@ export default async function CatalogPage({
           : '-createdAt'
 
   // ─── Consulta a la base de datos ─────────────────────────────────────────
-  const payload = await getPayload({ config: await config })
-  const { docs: products } = await payload.find({
+  const {
+    docs: products,
+    totalDocs,
+    totalPages,
+  } = await payload.find({
     collection: 'products',
     where,
     sort: payloadSort,
     depth: 1,
-    limit: 50,
+    limit,
+    page,
   })
 
   const cards = products.map(toCardData)
@@ -62,6 +106,7 @@ export default async function CatalogPage({
         currentSort={sort}
         currentMaxPrice={maxPrice}
         searchQuery={q}
+        categories={['Todas', ...allCategories.map((c) => c.name)]}
       />
 
       <div className="catalog-main">
@@ -93,6 +138,30 @@ export default async function CatalogPage({
             {cards.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="pagination">
+            {page > 1 && (
+              <a
+                href={`/catalog?${new URLSearchParams({ ...(params.q ? { q: params.q } : {}), ...(params.category && params.category !== 'Todas' ? { category: params.category } : {}), ...(params.sort && params.sort !== 'relevancia' ? { sort: params.sort } : {}), ...(params.maxPrice && Number(params.maxPrice) < 5000 ? { maxPrice: params.maxPrice } : {}), page: String(page - 1) }).toString()}`}
+                className="pagination-btn"
+              >
+                ← Anterior
+              </a>
+            )}
+            <span className="pagination-info">
+              Página {page} de {totalPages} · {totalDocs} productos
+            </span>
+            {page < totalPages && (
+              <a
+                href={`/catalog?${new URLSearchParams({ ...(params.q ? { q: params.q } : {}), ...(params.category && params.category !== 'Todas' ? { category: params.category } : {}), ...(params.sort && params.sort !== 'relevancia' ? { sort: params.sort } : {}), ...(params.maxPrice && Number(params.maxPrice) < 5000 ? { maxPrice: params.maxPrice } : {}), page: String(page + 1) }).toString()}`}
+                className="pagination-btn"
+              >
+                Siguiente →
+              </a>
+            )}
           </div>
         )}
       </div>

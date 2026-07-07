@@ -8,7 +8,7 @@ export const Products: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'category', 'price', 'stock', 'inStock', 'featured'],
+    defaultColumns: ['name', 'category', 'price', 'featured'],
   },
   access: {
     read: () => true,
@@ -66,15 +66,9 @@ export const Products: CollectionConfig = {
     },
     {
       name: 'category',
-      type: 'select',
+      type: 'relationship',
+      relationTo: 'categories',
       label: 'Categoría',
-      options: [
-        { label: 'Telar', value: 'Telar' },
-        { label: 'Seda', value: 'Seda' },
-        { label: 'Algodón', value: 'Algodón' },
-        { label: 'Bordados', value: 'Bordados' },
-        { label: 'Lana', value: 'Lana' },
-      ],
     },
     {
       name: 'material',
@@ -89,7 +83,7 @@ export const Products: CollectionConfig = {
     {
       name: 'price',
       type: 'number',
-      label: 'Precio (MXN)',
+      label: 'Precio base (MXN)',
       required: true,
     },
     {
@@ -117,34 +111,65 @@ export const Products: CollectionConfig = {
       ],
     },
     {
-      name: 'colors',
+      name: 'variants',
       type: 'array',
       label: 'Colores disponibles',
-      fields: [
-        {
-          name: 'hex',
-          type: 'text',
-          label: 'Color (código hex)',
-          required: true,
-          admin: {
-            description: 'Ej: #8B2252',
-          },
+      minRows: 1,
+      admin: {
+        components: {
+          RowLabel: '@/components/admin/VariantRowLabel#VariantRowLabel',
         },
-      ],
-    },
-    {
-      name: 'sizes',
-      type: 'array',
-      label: 'Tallas disponibles',
+      },
       fields: [
         {
-          name: 'label',
-          type: 'text',
-          label: 'Etiqueta de talla',
+          name: 'color',
+          type: 'relationship',
+          relationTo: 'colors',
           required: true,
-          admin: {
-            description: 'Ej: Clásico 170cm',
-          },
+          label: 'Color',
+        },
+        {
+          name: 'images',
+          type: 'array',
+          label: 'Fotos de este color',
+          fields: [
+            {
+              name: 'image',
+              type: 'upload',
+              relationTo: 'media',
+              required: true,
+            },
+          ],
+        },
+        {
+          name: 'sizes',
+          type: 'array',
+          label: 'Tallas disponibles',
+          minRows: 1,
+          fields: [
+            {
+              name: 'label',
+              type: 'text',
+              label: 'Talla',
+              required: true,
+              admin: {
+                description: 'Ej: Chica, Grande, Único, 170cm',
+              },
+            },
+            {
+              name: 'price',
+              type: 'number',
+              label: 'Precio (MXN)',
+              required: true,
+            },
+            {
+              name: 'stock',
+              type: 'number',
+              label: 'Piezas disponibles',
+              defaultValue: 0,
+              min: 0,
+            },
+          ],
         },
       ],
     },
@@ -159,22 +184,6 @@ export const Products: CollectionConfig = {
       name: 'careInstructions',
       type: 'richText',
       label: 'Instrucciones de cuidado',
-    },
-    {
-      name: 'images',
-      type: 'array',
-      label: 'Imágenes',
-      admin: {
-        description: 'La primera imagen es la principal. Las siguientes son la galería',
-      },
-      fields: [
-        {
-          name: 'image',
-          type: 'upload',
-          relationTo: 'media',
-          required: true,
-        },
-      ],
     },
 
     //  Reseñas
@@ -196,16 +205,6 @@ export const Products: CollectionConfig = {
 
     //  Estado
     {
-      name: 'stock',
-      type: 'number',
-      label: 'Stock disponible',
-      defaultValue: 0,
-      min: 0,
-      admin: {
-        description: 'Número de unidades disponibles',
-      },
-    },
-    {
       name: 'inStock',
       type: 'checkbox',
       label: 'En stock',
@@ -217,7 +216,12 @@ export const Products: CollectionConfig = {
         },
       },
       hooks: {
-        beforeChange: [({ siblingData }) => (siblingData.stock ?? 0) > 0],
+        beforeChange: [
+          ({ siblingData }) =>
+            (siblingData.variants ?? []).some((v: any) =>
+              (v.sizes ?? []).some((s: any) => (s.stock ?? 0) > 0),
+            ),
+        ],
       },
     },
     {

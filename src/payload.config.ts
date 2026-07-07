@@ -9,9 +9,12 @@ import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Products } from './collections/Products'
 import { Orders } from './collections/Orders'
+import { Colors } from './collections/Colors'
+import { Categories } from './collections/Categories'
 import { cloudinaryStorage } from 'payloadcms-storage-cloudinary'
 import { HomeSettings } from './globals/HomeSettings'
 import { es } from '@payloadcms/translations/languages/es'
+import { StoreSettings } from './globals/StoreSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -38,8 +41,8 @@ export default buildConfig({
       Component: '@/components/admin/Avatar',
     },
   },
-  collections: [Users, Media, Products, Orders],
-  globals: [HomeSettings],
+  collections: [Categories, Colors, Users, Media, Products, Orders],
+  globals: [HomeSettings, StoreSettings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

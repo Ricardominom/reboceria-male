@@ -22,16 +22,25 @@ function CartItemRow({ item }: { item: CartItem }) {
 
       <div className="cart-item-info">
         <p className="cart-item-name">{item.name}</p>
-        <p className="cart-item-size">{item.size}</p>
+        <p className="cart-item-size">
+          {item.color} · {item.size}
+        </p>
         <p className="cart-item-price">${item.price.toLocaleString('es-MX')} MXN</p>
 
         <div className="cart-item-controls">
           <div className="qty-control">
-            <button onClick={() => updateQty(item.id, item.size, item.qty - 1)}>−</button>
+            <button onClick={() => updateQty(item.id, item.size, item.color, item.qty - 1)}>
+              −
+            </button>
             <span>{item.qty}</span>
-            <button onClick={() => updateQty(item.id, item.size, item.qty + 1)}>+</button>
+            <button onClick={() => updateQty(item.id, item.size, item.color, item.qty + 1)}>
+              +
+            </button>
           </div>
-          <button className="cart-item-remove" onClick={() => removeItem(item.id, item.size)}>
+          <button
+            className="cart-item-remove"
+            onClick={() => removeItem(item.id, item.size, item.color)}
+          >
             Eliminar
           </button>
         </div>
@@ -80,7 +89,9 @@ export default function CartDrawer() {
               <small>Agrega algún rebozo para comenzar</small>
             </div>
           ) : (
-            items.map((item) => <CartItemRow key={`${item.id}-${item.size}`} item={item} />)
+            items.map((item) => (
+              <CartItemRow key={`${item.id}-${item.size}-${item.color}`} item={item} />
+            ))
           )}
         </div>
 

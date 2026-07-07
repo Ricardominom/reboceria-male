@@ -1,5 +1,24 @@
+import { getPayload } from 'payload'
+import config from '@/payload.config'
 import CheckoutForm from '@/components/CheckoutForm'
+import CartGuard from '@/components/CartGuard'
 
-export default function CheckoutPage() {
-  return <CheckoutForm />
+export default async function CheckoutPage() {
+  const payload = await getPayload({ config: await config })
+  const settings = await payload.findGlobal({ slug: 'store-settings' })
+
+  const bankDetails = {
+    bankName: settings.bankName ?? '',
+    bankHolder: settings.bankHolder ?? '',
+    bankClabe: settings.bankClabe ?? '',
+    bankAccount: settings.bankAccount ?? '',
+    transferNotes: settings.transferNotes ?? '',
+  }
+
+  return (
+    <>
+      <CartGuard />
+      <CheckoutForm bankDetails={bankDetails} />
+    </>
+  )
 }

@@ -4,91 +4,40 @@ import config from '@/payload.config'
 import type { Media } from '@/payload-types'
 import ProductCard from '@/components/ProductCard'
 import { toCardData } from '@/lib/products'
-import ImageCarousel from '@/components/ImageCarousel'
 import AnimateIn from '@/components/AnimateIn'
-
-const CATEGORIES = [
-  { label: 'Telar de cintura', slug: 'Telar', color: '#F8D7EA', text: '#C13584', icon: '🧵' },
-  { label: 'Seda pura', slug: 'Seda', color: '#E8EAF6', text: '#3949AB', icon: '🌸' },
-  { label: 'Bordados', slug: 'Bordados', color: '#FFF3E0', text: '#E65100', icon: '🌺' },
-  { label: 'Algodón natural', slug: 'Algodón', color: '#E8F5E9', text: '#2E7D32', icon: '🌿' },
-  { label: 'Lana', slug: 'Lana', color: '#FCE4EC', text: '#AD1457', icon: '✨' },
-]
-
-const TRUST_ITEMS = [
-  { icon: '🚚', title: 'Envío gratis', sub: 'En compras +$800 MXN' },
-  { icon: '🔒', title: 'Pago seguro', sub: 'Tarjeta, OXXO, transferencia' },
-  { icon: '↩️', title: 'Devoluciones', sub: '30 días sin preguntas' },
-  { icon: '🌿', title: 'Comercio justo', sub: 'Precio directo a la artesana' },
-]
-
-const GIFT_IDEAS = [
-  {
-    icon: '🌸',
-    label: 'Para mamá',
-    sub: 'Rebozos suaves y florales',
-    bg: '#FDF0F7',
-    color: '#C13584',
-    slug: 'Algodón',
-  },
-  {
-    icon: '💍',
-    label: 'Para boda',
-    sub: 'Seda y bordados elegantes',
-    bg: '#EEF0FF',
-    color: '#3949AB',
-    slug: 'Seda',
-  },
-  {
-    icon: '🎉',
-    label: 'Para XV años',
-    sub: 'Colores y bordados vibrantes',
-    bg: '#FFF3E0',
-    color: '#E65100',
-    slug: 'Bordados',
-  },
-  {
-    icon: '🌎',
-    label: 'Para viajera',
-    sub: 'Tejidos auténticos de México',
-    bg: '#E8F5E9',
-    color: '#2E7D32',
-    slug: 'Telar',
-  },
-]
-
-const HOW_TO_STEPS = [
-  {
-    icon: '🧣',
-    step: '01',
-    title: 'Como chal',
-    desc: 'Envuélvelo sobre los hombros para calidez y estilo. Va con cualquier outfit, en cualquier ocasión.',
-  },
-  {
-    icon: '👶',
-    step: '02',
-    title: 'Como cargador',
-    desc: 'La técnica ancestral para cargar al bebé con seguridad y ternura, cerca del corazón.',
-  },
-  {
-    icon: '👗',
-    step: '03',
-    title: 'Como accesorio',
-    desc: 'Llévalo en la bolsa y úsalo de mil formas: falda, top, turbante o cinturón.',
-  },
-]
+import NewsletterForm from '@/components/NewsletterForm'
+import ImageCarousel from '@/components/ImageCarousel'
+import TestimonialsCarousel from '@/components/TestimonialsCarousel'
 
 export default async function HomePage() {
   const payload = await getPayload({ config: await config })
+
+  const { docs: mediaItems } = await payload.find({
+    collection: 'media',
+    limit: 18,
+    sort: '-createdAt',
+    depth: 0,
+  })
+
+  const mediaUrls = mediaItems
+    .map((item) => item.url)
+    .filter((url): url is string => typeof url === 'string')
 
   const { docs: featured } = await payload.find({
     collection: 'products',
     where: { featured: { equals: true } },
     depth: 1,
-    limit: 4,
+    limit: 5,
   })
 
   const homeSettings = await payload.findGlobal({ slug: 'home-settings', depth: 1 })
+
+  const { docs: allCategories } = await payload.find({
+    collection: 'categories',
+    limit: 20,
+    sort: 'name',
+    depth: 1,
+  })
 
   const heroUrls = (homeSettings.heroImages ?? [])
     .map((item) =>
@@ -102,47 +51,65 @@ export default async function HomePage() {
     )
     .filter((url): url is string => typeof url === 'string')
 
+  const testimonialUrls = (homeSettings.testimonialImages ?? [])
+    .map((item) =>
+      typeof item.image === 'object' && item.image ? (item.image as Media).url : null,
+    )
+    .filter((url): url is string => typeof url === 'string')
+
   return (
     <div>
-      {/* ── Hero ── */}
-      <section className="hero">
-        <div className="hero-image">
-          {heroUrls.length > 0 ? (
-            <ImageCarousel images={heroUrls} height={480} alt="Rebozos Mary" />
-          ) : (
-            <div className="hero-placeholder">
-              📷<span>Fotografía principal</span>
-            </div>
-          )}
+      {/* ── Hero editorial ── */}
+      <section className="hero-editorial">
+        <div className="hero-editorial-carousel">
+          <ImageCarousel images={heroUrls} height="100%" alt="Rebozos Mary" />
         </div>
-        <div className="hero-content">
-          <div className="hero-badge">✨ NUEVA COLECCIÓN 2026</div>
-          <h1 className="hero-title">
-            Rebozos que
+
+        <div className="hero-editorial-overlay" />
+
+        <div className="hero-editorial-content">
+          <h1 className="hero-editorial-title">
+            Tradición que
             <br />
-            <em>cuentan historias</em>
+            <em>envuelve historias</em>
           </h1>
-          <p className="hero-description">
-            Tejidos a mano por artesanas mexicanas. Cada rebozo es una pieza única llena de cultura,
-            arte y tradición ancestral.
+          <img src="/svg/ornamento-separador.svg" className="hero-ornament" alt="" />
+          <p className="hero-editorial-desc">
+            Rebozos tejidos a mano por artesanas mexicanas con técnicas ancestrales que pasan de
+            generación en generación.
           </p>
-          <div className="hero-actions">
-            <Link href="/catalog" className="btn-primary">
-              Ver colección →
+          <div className="hero-editorial-actions">
+            <Link href="/catalog" className="btn-primary-dark">
+              Descubre la colección
             </Link>
-            <Link href="/#historia" className="btn-outline">
+            <Link href="/#historia" className="btn-outline-light">
               Nuestra historia
             </Link>
           </div>
-          <div className="hero-stats">
-            {[
-              ['50+', 'Artesanas'],
-              ['12', 'Regiones'],
-              ['1998', 'Desde'],
-            ].map(([n, l]) => (
-              <div key={l} className="hero-stat">
-                <span className="hero-stat-number">{n}</span>
-                <span className="hero-stat-label">{l}</span>
+
+          <div className="hero-benefits">
+            {(
+              [
+                {
+                  icon: '/svg/hecho-mano.svg',
+                  title: 'Hecho a mano',
+                  sub: 'por artesanas mexicanas',
+                },
+                { icon: '/svg/envio.svg', title: 'Envío gratis', sub: 'en compras +$800 MXN' },
+                {
+                  icon: '/svg/pago-seguro.svg',
+                  title: 'Pago seguro',
+                  sub: 'con tarjetas y transferencias',
+                },
+                { icon: '/svg/cambios.svg', title: 'Cambios fáciles', sub: 'sin complicaciones' },
+              ] as const
+            ).map((b) => (
+              <div key={b.title} className="hero-benefit">
+                <img src={b.icon} alt="" className="hero-benefit-icon" />
+                <div>
+                  <p className="hero-benefit-title">{b.title}</p>
+                  <p className="hero-benefit-sub">{b.sub}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -150,23 +117,43 @@ export default async function HomePage() {
       </section>
 
       {/* ── Categorías ── */}
-      <AnimateIn>
-        <section className="section-categories">
-          <h2 className="section-title">Explora por tipo</h2>
-          <div className="categories-list">
-            {CATEGORIES.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/catalog?category=${cat.slug}`}
-                className="category-chip"
-                style={{ background: cat.color, color: cat.text }}
-              >
-                {cat.icon} {cat.label}
-              </Link>
-            ))}
+      {allCategories.length > 0 && (
+        <section className="section-categories" id="categorias">
+          <div className="section-categories-header">
+            <h2 className="section-categories-title">
+              Explora nuestros
+              <br />
+              rebozos por tipo
+            </h2>
+            <img src="/svg/ornamento-separador.svg" className="hero-ornament" alt="" />
+            <Link href="/catalog" className="link-ver-todos">
+              Ver todos los tipos →
+            </Link>
+          </div>
+          <div className="category-cards-row">
+            {allCategories.map((cat) => {
+              const img =
+                typeof cat.image === 'object' && cat.image ? (cat.image as Media).url : null
+              return (
+                <Link key={cat.id} href={`/catalog?category=${cat.name}`} className="category-card">
+                  {img ? (
+                    <img src={img} alt={cat.name} className="category-card-img" />
+                  ) : (
+                    <div className="category-card-placeholder" />
+                  )}
+                  <div className="category-card-overlay" />
+                  <div className="category-card-content">
+                    <span className="category-card-name">{cat.name}</span>
+                    {cat.description && (
+                      <span className="category-card-desc">{cat.description}</span>
+                    )}
+                  </div>
+                </Link>
+              )
+            })}
           </div>
         </section>
-      </AnimateIn>
+      )}
 
       {/* ── Productos destacados ── */}
       <AnimateIn>
@@ -180,7 +167,7 @@ export default async function HomePage() {
           {featured.length === 0 ? (
             <p className="empty-state">Aún no hay productos destacados. Márcalos en el admin.</p>
           ) : (
-            <div className="products-grid products-grid--4">
+            <div className="products-grid products-grid--5">
               {featured.map((product) => (
                 <ProductCard key={product.id} product={toCardData(product)} />
               ))}
@@ -189,120 +176,202 @@ export default async function HomePage() {
         </section>
       </AnimateIn>
 
-      {/* ── El regalo perfecto ── */}
-      <AnimateIn>
-        <section className="section-gifts">
-          <div className="section-gifts-header">
-            <p className="section-eyebrow">PORQUE REGALAR ARTE VALE MÁS</p>
-            <h2 className="section-title">El regalo perfecto</h2>
-            <p className="section-gifts-desc">
-              Un rebozo artesanal es un regalo que dura toda la vida. Elige la ocasión.
-            </p>
-          </div>
-          <div className="gifts-grid">
-            {GIFT_IDEAS.map((gift) => (
-              <Link
-                key={gift.slug}
-                href={`/catalog?category=${gift.slug}`}
-                className="gift-card"
-                style={{ background: gift.bg }}
-              >
-                <span className="gift-icon">{gift.icon}</span>
-                <span className="gift-label" style={{ color: gift.color }}>
-                  {gift.label}
-                </span>
-                <span className="gift-sub">{gift.sub}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      </AnimateIn>
+      {/* ── Historia ── */}
+      <section className="section-historia" id="historia">
+        <div className="historia-image">
+          {artisanUrls.length > 0 ? (
+            <ImageCarousel images={artisanUrls} height="100%" alt="Artesana tejiendo un rebozo" />
+          ) : (
+            <div className="historia-img-placeholder" />
+          )}
+        </div>
+        <div className="historia-content">
+          <img
+            src="/img/nuestra-historia.png"
+            alt=""
+            className="historia-ornamento"
+            aria-hidden="true"
+          />
+          <p className="section-eyebrow">NUESTRA HISTORIA</p>
+          <h2 className="historia-title">
+            Hechos con paciencia,
+            <br />
+            dedicación y amor
+          </h2>
+          <img
+            src="/svg/ornamento-separador.svg"
+            alt=""
+            className="historia-divisor"
+            aria-hidden="true"
+          />
+          <p className="historia-text">
+            Desde 1998 trabajamos de la mano con mujeres artesanas de diferentes regiones de México
+            para preservar el arte del tejido ancestral y llevar su belleza al mundo.
+          </p>
+          <p className="historia-text">
+            Cada rebozo cuenta una historia, hecha de tradición, paciencia y orgullo por nuestras
+            raíces.
+          </p>
+          <Link href="/#historia" className="btn-historia">
+            Conoce nuestra historia
+          </Link>
+        </div>
+      </section>
 
-      {/* ── Artesana del mes ── */}
-      <AnimateIn>
-        <section className="section-artisan-month" id="artesana">
-          <div className="artisan-month-inner">
-            <div className="artisan-month-photo">
-              <div className="artisan-month-photo-placeholder">🧵</div>
+      {/* ── Proceso artesanal ── */}
+      <section className="section-proceso">
+        <h2 className="section-proceso-title">Así es como elaboramos cada rebozo</h2>
+        <div className="proceso-steps">
+          {(
+            [
+              {
+                icon: '/svg/seleccion-hilo.svg',
+                num: '1',
+                title: 'Selección del hilo',
+                desc: 'Elegimos cuidadosamente los mejores materiales.',
+              },
+              {
+                icon: '/svg/tenido-artesanal.svg',
+                num: '2',
+                title: 'Teñido artesanal',
+                desc: 'Utilizamos tintes de calidad para colores duraderos.',
+              },
+              {
+                icon: '/svg/tejido-mano.svg',
+                num: '3',
+                title: 'Tejido a mano',
+                desc: 'Artesanas expertas tejen cada pieza con dedicación.',
+              },
+              {
+                icon: '/svg/revision-calidad.svg',
+                num: '4',
+                title: 'Revisión de calidad',
+                desc: 'Cada rebozo es revisado cuidadosamente.',
+              },
+              {
+                icon: '/svg/envio-hogar.svg',
+                num: '5',
+                title: 'Envío a tu hogar',
+                desc: 'Empaquetamos con cuidado para que llegue perfecto.',
+              },
+            ] as const
+          ).map((step, i, arr) => (
+            <div key={step.num} className="proceso-step-wrapper">
+              <div className="proceso-step">
+                <div className="proceso-step-icon">
+                  <img src={step.icon} alt="" />
+                </div>
+                <p className="proceso-step-num">
+                  {step.num}. {step.title}
+                </p>
+                <p className="proceso-step-desc">{step.desc}</p>
+              </div>
+              {i < arr.length - 1 && <span className="proceso-arrow">→</span>}
             </div>
-            <div className="artisan-month-content">
-              <p className="section-eyebrow">ARTESANA DEL MES</p>
-              <h2 className="artisan-month-name">María de los Ángeles Cruz</h2>
-              <p className="artisan-month-region">📍 Teotitlán del Valle, Oaxaca</p>
-              <p className="artisan-month-bio">
-                Con más de 35 años tejiendo en telar de cintura, María aprendió el oficio de su
-                abuela. Cada pieza lleva horas de dedicación y diseños que narran la cosmogonía
-                zapoteca. Su trabajo ha viajado a Japón, Europa y toda América Latina.
-              </p>
-              <div className="artisan-month-tags">
-                <span>Telar de cintura</span>
-                <span>Zapoteca</span>
-                <span>Oaxaca</span>
-              </div>
-              <Link href="/catalog?category=Telar" className="btn-primary">
-                Ver sus piezas →
-              </Link>
-            </div>
-          </div>
-        </section>
-      </AnimateIn>
+          ))}
+        </div>
+      </section>
 
-      {/* ── Banner artesanas ── */}
-      <AnimateIn>
-        <section className="artisan-banner" id="historia">
-          <div className="artisan-banner-image">
-            {artisanUrls.length > 0 ? (
-              <ImageCarousel images={artisanUrls} height={220} alt="Artesana tejiendo" />
-            ) : (
-              <div className="hero-placeholder">
-                📷<span>Artesana tejiendo</span>
-              </div>
-            )}
-          </div>
-          <div className="artisan-banner-content">
-            <p className="artisan-banner-label">NUESTRA HISTORIA</p>
-            <blockquote className="artisan-banner-quote">
-              "Cada hilo lleva el amor y el conocimiento de mujeres que aprendieron a tejer de sus
-              madres y sus abuelas."
-            </blockquote>
-            <Link href="/#historia" className="btn-white">
-              Conoce nuestra historia →
-            </Link>
-          </div>
-        </section>
-      </AnimateIn>
+      {/* ── Testimonios ── */}
+      <section className="section-testimonios">
+        <TestimonialsCarousel />
+        <div className="testimonios-images">
+          {testimonialUrls.slice(0, 4).map((url, i) => (
+            <img key={i} src={url} alt="" className="testimonios-img" />
+          ))}
+          {testimonialUrls.length === 0 && (
+            <>
+              <div className="testimonios-img-placeholder" />
+              <div className="testimonios-img-placeholder" />
+              <div className="testimonios-img-placeholder" />
+              <div className="testimonios-img-placeholder" />
+            </>
+          )}
+        </div>
+      </section>
 
-      {/* ── Cómo usar tu rebozo ── */}
-      <AnimateIn>
-        <section className="section-howto">
-          <div className="section-howto-header">
-            <p className="section-eyebrow section-eyebrow--light">VERSÁTIL Y ATEMPORAL</p>
-            <h2 className="section-title section-title--light">¿Cómo usar tu rebozo?</h2>
-          </div>
-          <div className="howto-grid">
-            {HOW_TO_STEPS.map((s) => (
-              <div key={s.step} className="howto-card">
-                <span className="howto-step">{s.step}</span>
-                <span className="howto-icon">{s.icon}</span>
-                <h3 className="howto-title">{s.title}</h3>
-                <p className="howto-desc">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      </AnimateIn>
-
-      {/* ── Trust bar ── */}
-      <section className="trust-bar">
-        {TRUST_ITEMS.map((item) => (
-          <div key={item.title} className="trust-item">
-            <span className="trust-icon">{item.icon}</span>
+      {/* ── Valores de marca ── */}
+      <section className="section-valores">
+        {(
+          [
+            {
+              icon: '/svg/revision-calidad.svg',
+              title: 'Apoyas a comunidades',
+              sub: 'y tradiciones mexicanas',
+            },
+            {
+              icon: '/svg/disenos-unicos.svg',
+              title: 'Diseños únicos',
+              sub: 'piezas que cuentan historias',
+            },
+            {
+              icon: '/svg/ediciones-limitadas.svg',
+              title: 'Ediciones limitadas',
+              sub: 'producción artesanal',
+            },
+            {
+              icon: '/svg/calidad-perdura.svg',
+              title: 'Calidad que perdura',
+              sub: 'tejidos para toda la vida',
+            },
+          ] as const
+        ).map((v) => (
+          <div key={v.title} className="valor-item">
+            <img src={v.icon} alt="" className="valor-icon" />
             <div>
-              <p className="trust-title">{item.title}</p>
-              <p className="trust-sub">{item.sub}</p>
+              <p className="valor-title">{v.title}</p>
+              <p className="valor-sub">{v.sub}</p>
             </div>
           </div>
         ))}
+      </section>
+
+      {/* ── Instagram ── */}
+      <section className="section-instagram">
+        <div className="instagram-header">
+          <h2 className="section-instagram-title">Síguenos en Instagram</h2>
+          <a
+            href="https://instagram.com/rebozosmary"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="instagram-handle"
+          >
+            @rebozosmary
+          </a>
+        </div>
+        <div className="instagram-grid">
+          {mediaUrls.slice(0, 6).map((url, i) => (
+            <div key={i} className="instagram-item">
+              <img src={url} alt="" className="instagram-img" />
+            </div>
+          ))}
+          {mediaUrls.length === 0 &&
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="instagram-item instagram-item--placeholder" />
+            ))}
+        </div>
+      </section>
+
+      {/* ── Newsletter ── */}
+      <section className="section-newsletter">
+        <div className="newsletter-icon">
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          >
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <polyline points="2,4 12,13 22,4" />
+          </svg>
+        </div>{' '}
+        <div className="newsletter-copy">
+          <p className="newsletter-title">Recibe novedades, historias</p>
+          <p className="newsletter-sub">y promociones especiales</p>
+        </div>
+        <NewsletterForm />
       </section>
     </div>
   )

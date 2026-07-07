@@ -1,13 +1,31 @@
-import type { Product, Media } from '@/payload-types'
-import type { ProductCardData } from '@/types'
+import type { Product, Media, Color } from '@/payload-types'
+import type { ProductCardData, Variant } from '@/types'
 
-export function getFirstImageUrl(product: Product): string | null {
-  const first = product.images?.[0]
-  if (!first || typeof first.image === 'number') return null
-  return (first.image as Media).url ?? null
+export function resolveVariants(product: Product): Variant[] {
+  return (product.variants ?? []).map((v) => {
+    const color = typeof v.color === 'number' ? null : (v.color as Color)
+    return {
+      colorName: color?.name ?? 'Sin color',
+      colorHex: color?.hex ?? null,
+      images: (v.images ?? [])
+        .map((i) => (typeof i.image !== 'number' ? (i.image as Media).url : null))
+        .filter((url): url is string => url !== null),
+      sizes: (v.sizes ?? []).map((s) => ({
+        label: s.label,
+        price: s.price ?? 0,
+        stock: s.stock ?? 0,
+      })),
+    }
+  })
 }
 
 export function toCardData(product: Product): ProductCardData {
+  const variants = resolveVariants(product)
+  const firstVariant = variants[0]
+  const totalStock = variants.reduce(
+    (sum, v) => sum + v.sizes.reduce((s2, s) => s2 + s.stock, 0),
+    0,
+  )
   return {
     id: product.id,
     name: product.name,
@@ -19,9 +37,10 @@ export function toCardData(product: Product): ProductCardData {
     tag: product.tag,
     rating: product.rating,
     reviewCount: product.reviewCount,
-    image: getFirstImageUrl(product),
-    sizes: product.sizes?.map((s) => s.label) ?? [],
-    stock: product.stock,
+    image: firstVariant?.images[0] ?? null,
+    color: firstVariant?.colorName ?? '',
+    sizes: firstVariant?.sizes.map((s) => s.label) ?? [],
+    stock: totalStock,
   }
 }
 

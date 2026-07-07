@@ -23,6 +23,13 @@ const schema = z.object({
 })
 
 type FormData = z.infer<typeof schema>
+type BankDetails = {
+  bankName: string
+  bankHolder: string
+  bankClabe: string
+  bankAccount: string
+  transferNotes: string
+}
 
 // Qué campos validar en cada paso
 const STEP_FIELDS: Record<number, (keyof FormData)[]> = {
@@ -33,13 +40,44 @@ const STEP_FIELDS: Record<number, (keyof FormData)[]> = {
 
 const STEPS = ['Contacto', 'Envío', 'Pago']
 
+// ─── Helper: campo de texto ───────────────────────────────────────────────────
+function Field({
+  label,
+  name,
+  type = 'text',
+  placeholder = '',
+  register,
+  errors,
+}: {
+  label: string
+  name: keyof FormData
+  type?: string
+  placeholder?: string
+  register: any
+  errors: any
+}) {
+  return (
+    <div className="field">
+      <label className="field-label">{label}</label>
+      <input
+        {...register(name)}
+        type={type}
+        placeholder={placeholder}
+        className={`field-input ${errors[name] ? 'field-input--error' : ''}`}
+      />
+      {errors[name] && <p className="field-error">{errors[name]?.message as string}</p>}
+    </div>
+  )
+}
+
 // ─── Componente ───────────────────────────────────────────────────────────────
-export default function CheckoutForm() {
+export default function CheckoutForm({ bankDetails }: { bankDetails: BankDetails }) {
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [orderDone, setOrderDone] = useState(false)
   const [orderId, setOrderId] = useState<number | null>(null)
   const [serverError, setServerError] = useState('')
+  const [orderTotal, setOrderTotal] = useState(0)
 
   const items = useCart((s) => s.items)
   const subtotal = useCart((s) => s.subtotal())
@@ -75,6 +113,7 @@ export default function CheckoutForm() {
       items: items.map((i) => ({
         productId: i.id,
         productName: i.name,
+        color: i.color,
         size: i.size,
         qty: i.qty,
         unitPrice: i.price,
@@ -82,6 +121,7 @@ export default function CheckoutForm() {
       subtotal,
       shippingCost: shipping,
       total,
+      bankDetails,
     })
 
     setSubmitting(false)
@@ -99,6 +139,7 @@ export default function CheckoutForm() {
 
     // Transferencia bancaria → mostrar éxito directo
     setOrderId(result.orderId)
+    setOrderTotal(total)
     clearCart()
     setOrderDone(true)
   }
@@ -119,33 +160,27 @@ export default function CheckoutForm() {
         <Link href="/" className="btn-primary">
           Volver a la tienda →
         </Link>
+        {bankDetails.bankClabe && (
+          <div className="bank-details">
+            <p>Realiza tu transferencia a:</p>
+            <p>
+              <strong>Banco:</strong> {bankDetails.bankName}
+            </p>
+            <p>
+              <strong>Titular:</strong> {bankDetails.bankHolder}
+            </p>
+            <p>
+              <strong>CLABE:</strong> {bankDetails.bankClabe}
+            </p>
+            <p>
+              <strong>Monto:</strong> ${orderTotal.toLocaleString('es-MX')} MXN
+            </p>
+            {bankDetails.transferNotes && <p>{bankDetails.transferNotes}</p>}
+          </div>
+        )}
       </div>
     )
   }
-
-  // ─── Helper: campo de texto ───────────────────────────────────────────────
-  const Field = ({
-    label,
-    name,
-    type = 'text',
-    placeholder = '',
-  }: {
-    label: string
-    name: keyof FormData
-    type?: string
-    placeholder?: string
-  }) => (
-    <div className="field">
-      <label className="field-label">{label}</label>
-      <input
-        {...register(name)}
-        type={type}
-        placeholder={placeholder}
-        className={`field-input ${errors[name] ? 'field-input--error' : ''}`}
-      />
-      {errors[name] && <p className="field-error">{errors[name]?.message as string}</p>}
-    </div>
-  )
 
   return (
     <div className="checkout-wrapper">
@@ -182,29 +217,80 @@ export default function CheckoutForm() {
           {step === 1 && (
             <div>
               <h2 className="form-section-title">Información de contacto</h2>
-              <Field label="NOMBRE COMPLETO" name="nombre" placeholder="María García" />
+              <Field
+                label="NOMBRE COMPLETO"
+                name="nombre"
+                placeholder="María García"
+                register={register}
+                errors={errors}
+              />
               <Field
                 label="CORREO ELECTRÓNICO"
                 name="email"
                 type="email"
                 placeholder="maria@ejemplo.com"
+                register={register}
+                errors={errors}
               />
-              <Field label="TELÉFONO" name="tel" type="tel" placeholder="55 1234 5678" />
+              <Field
+                label="TELÉFONO"
+                name="tel"
+                type="tel"
+                placeholder="55 1234 5678"
+                register={register}
+                errors={errors}
+              />
             </div>
           )}
 
           {step === 2 && (
             <div>
               <h2 className="form-section-title">Dirección de envío</h2>
-              <Field label="CALLE" name="calle" placeholder="Av. Insurgentes Sur" />
+              <Field
+                label="CALLE"
+                name="calle"
+                placeholder="Av. Insurgentes Sur"
+                register={register}
+                errors={errors}
+              />
               <div className="field-row">
-                <Field label="NÚMERO" name="numero" placeholder="1234" />
-                <Field label="COLONIA" name="colonia" placeholder="Del Valle" />
+                <Field
+                  label="NÚMERO"
+                  name="numero"
+                  placeholder="1234"
+                  register={register}
+                  errors={errors}
+                />
+                <Field
+                  label="COLONIA"
+                  name="colonia"
+                  placeholder="Del Valle"
+                  register={register}
+                  errors={errors}
+                />
               </div>
-              <Field label="CIUDAD" name="ciudad" placeholder="Ciudad de México" />
+              <Field
+                label="CIUDAD"
+                name="ciudad"
+                placeholder="Ciudad de México"
+                register={register}
+                errors={errors}
+              />
               <div className="field-row">
-                <Field label="ESTADO" name="estado" placeholder="CDMX" />
-                <Field label="CÓDIGO POSTAL" name="cp" placeholder="03100" />
+                <Field
+                  label="ESTADO"
+                  name="estado"
+                  placeholder="CDMX"
+                  register={register}
+                  errors={errors}
+                />
+                <Field
+                  label="CÓDIGO POSTAL"
+                  name="cp"
+                  placeholder="03100"
+                  register={register}
+                  errors={errors}
+                />
               </div>
             </div>
           )}
@@ -228,10 +314,25 @@ export default function CheckoutForm() {
                 </label>
               ))}
 
-              {paymentMethod === 'tarjeta' && (
-                <div className="stripe-placeholder">
-                  <p>💳 Aquí irá el formulario de Stripe</p>
-                  <small>Se integra en el siguiente paso del proyecto</small>
+              {paymentMethod === 'transferencia' && bankDetails.bankClabe && (
+                <div className="bank-details">
+                  <p>
+                    <strong>Banco:</strong> {bankDetails.bankName}
+                  </p>
+                  <p>
+                    <strong>Titular:</strong> {bankDetails.bankHolder}
+                  </p>
+                  <p>
+                    <strong>CLABE:</strong> {bankDetails.bankClabe}
+                  </p>
+                  {bankDetails.bankAccount && (
+                    <p>
+                      <strong>Cuenta:</strong> {bankDetails.bankAccount}
+                    </p>
+                  )}
+                  {bankDetails.transferNotes && (
+                    <p className="transfer-notes">{bankDetails.transferNotes}</p>
+                  )}
                 </div>
               )}
             </div>
@@ -247,11 +348,21 @@ export default function CheckoutForm() {
             )}
 
             {step < 3 ? (
-              <button type="button" onClick={nextStep} className="btn-primary checkout-btn-next">
+              <button
+                key="next"
+                type="button"
+                onClick={nextStep}
+                className="btn-primary checkout-btn-next"
+              >
                 Continuar: {STEPS[step]} →
               </button>
             ) : (
-              <button type="submit" disabled={submitting} className="btn-primary checkout-btn-next">
+              <button
+                key="submit"
+                type="submit"
+                disabled={submitting}
+                className="btn-primary checkout-btn-next"
+              >
                 {submitting ? 'Procesando...' : '✓ Confirmar pedido'}
               </button>
             )}
@@ -263,14 +374,14 @@ export default function CheckoutForm() {
           <h3 className="summary-title">Resumen del pedido</h3>
 
           {items.map((item) => (
-            <div key={`${item.id}-${item.size}`} className="summary-item">
+            <div key={`${item.id}-${item.size}-${item.color}`} className="summary-item">
               <div className="summary-item-image">
                 {item.image ? <img src={item.image} alt={item.name} /> : <span>📷</span>}
               </div>
               <div className="summary-item-info">
                 <p className="summary-item-name">{item.name}</p>
                 <p className="summary-item-meta">
-                  {item.size} · ×{item.qty}
+                  {item.color} · {item.size} · ×{item.qty}
                 </p>
                 <p className="summary-item-price">
                   ${(item.price * item.qty).toLocaleString('es-MX')} MXN
