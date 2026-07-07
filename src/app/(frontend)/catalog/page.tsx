@@ -4,6 +4,7 @@ import { toCardData } from '@/lib/products'
 import ProductCard from '@/components/ProductCard'
 import CatalogFilters from '@/components/CatalogFilters'
 import type { Metadata } from 'next'
+import type { Where } from 'payload'
 
 export async function generateMetadata({
   searchParams,
@@ -58,7 +59,7 @@ export default async function CatalogPage({
   })
 
   // ─── Construcción del filtro para Payload ────────────────────────────────
-  const where: Record<string, unknown> = {}
+  const where: Where = {}
 
   if (category !== 'Todas') {
     const matched = allCategories.find((c) => c.name === category)
