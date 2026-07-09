@@ -127,7 +127,7 @@ export default async function HomePage() {
             </h2>
             <img src="/svg/ornamento-separador.svg" className="hero-ornament" alt="" />
             <Link href="/catalog" className="link-ver-todos">
-              Ver todos los tipos →
+              Ver Guía de Rebozos →
             </Link>
           </div>
           <div className="category-cards-row">

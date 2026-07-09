@@ -28,13 +28,21 @@ export default async function FrontendLayout({ children }: { children: React.Rea
 
   const promoMessages = (settings.promoMessages ?? []).map((m: any) => m.text).filter(Boolean)
 
+  const { docs: categories } = await payload.find({
+    collection: 'categories',
+    limit: 20,
+    sort: 'name',
+    depth: 0,
+  })
+  const tiposNav = categories.map((c) => c.name)
+
   return (
     <html
       lang="es"
       className={`${nunito.variable} ${lora.variable} ${playfair.variable} ${montserrat.variable}`}
     >
       <body>
-        <Navbar promoMessages={promoMessages} />
+        <Navbar promoMessages={promoMessages} tiposNav={tiposNav} />
         <CartDrawer />
         <main>{children}</main>
         <Footer />

@@ -33,5 +33,15 @@ export const Categories: CollectionConfig = {
       label: 'Imagen de la categoría',
       admin: { description: 'Foto representativa que aparece en el home' },
     },
+    {
+      name: 'guiaImage',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Imagen editorial (Guía de Rebozos)',
+      admin: {
+        description:
+          'Imagen grande que aparece en la página Guía de Rebozos. Si no se sube, se usará la imagen de categoría.',
+      },
+    },
   ],
 }

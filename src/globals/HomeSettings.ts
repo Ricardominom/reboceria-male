@@ -46,6 +46,26 @@ export const HomeSettings: GlobalConfig = {
       ],
     },
     {
+      name: 'guiaHeroImage',
+      label: 'Imagen hero — Guía de Rebozos',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description:
+          'Imagen que aparece en el lado derecho del hero de la página Guía de Rebozos. Recomendado: artesana trabajando en telar.',
+      },
+    },
+    {
+      name: 'guiaCtaImage',
+      label: 'Imagen CTA — Guía de Rebozos',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description:
+          'Imagen decorativa del banner final en la página Guía de Rebozos (sección "¿Ya encontraste el tejido ideal?").',
+      },
+    },
+    {
       name: 'giftIdeas',
       type: 'array',
       label: 'Sección "El regalo perfecto"',

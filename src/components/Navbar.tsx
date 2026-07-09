@@ -33,15 +33,31 @@ function PromoBar({ messages }: { messages: string[] }) {
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+}
+
 const NAV_LINKS = [
   { label: 'Inicio', href: '/' },
   { label: 'Colecciones', href: '/catalog' },
-  { label: 'Tipos de Rebozo', href: '/#categorias' },
+  { label: 'Guía de Rebozos', href: '/guia' },
   { label: 'Mi pedido', href: '/orders' },
   { label: 'Contacto', href: '/#contacto' },
 ]
 
-export default function Navbar({ promoMessages = [] }: { promoMessages?: string[] }) {
+export default function Navbar({
+  promoMessages = [],
+  tiposNav = [],
+}: {
+  promoMessages?: string[]
+  tiposNav?: string[]
+}) {
   const pathname = usePathname()
   const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
@@ -75,15 +91,37 @@ export default function Navbar({ promoMessages = [] }: { promoMessages?: string[
 
         {/* Links */}
         <div className="navbar-links">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`navbar-link ${pathname === link.href ? 'navbar-link--active' : ''}`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) =>
+            link.href === '/guia' ? (
+              <div key={link.href} className="navbar-dropdown">
+                <Link
+                  href={link.href}
+                  className={`navbar-link ${pathname === link.href ? 'navbar-link--active' : ''}`}
+                >
+                  {link.label} <span className="navbar-dropdown-arrow">▾</span>
+                </Link>
+                <div className="navbar-dropdown-menu">
+                  {tiposNav.map((tipo) => (
+                    <Link
+                      key={tipo}
+                      href={`/guia/${toSlug(tipo)}`}
+                      className="navbar-dropdown-item"
+                    >
+                      {tipo}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`navbar-link ${pathname === link.href ? 'navbar-link--active' : ''}`}
+              >
+                {link.label}
+              </Link>
+            ),
+          )}
         </div>
 
         {/* Acciones */}
