@@ -60,6 +60,16 @@ const RATINGS: Record<string, number[]> = {
   Chal: [4, 3, 4, 5, 3, 4],
 }
 
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+}
+
 function Stars({ count, max = 5 }: { count: number; max?: number }) {
   return (
     <span className="guia-stars">
@@ -179,7 +189,7 @@ export default async function GuiaPage() {
                 <h2 className="guia-tipo-name">{tipo.name}</h2>
                 <p className="guia-tipo-tagline">{tipo.tagline}</p>
                 <p className="guia-tipo-desc">{tipo.desc}</p>
-                <Link href={`/catalog?category=${tipo.name}`} className="guia-tipo-link">
+                <Link href={`/guia/${toSlug(tipo.name)}`} className="guia-tipo-link">
                   Descubrir {tipo.name} →
                 </Link>
               </div>
