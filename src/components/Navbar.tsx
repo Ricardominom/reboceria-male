@@ -36,7 +36,7 @@ function PromoBar({ messages }: { messages: string[] }) {
 const NAV_LINKS = [
   { label: 'Inicio', href: '/' },
   { label: 'Colecciones', href: '/catalog' },
-  { label: 'Tipos de Rebozo', href: '/#categorias' },
+  { label: 'Guía de Rebozos', href: '/guia' },
   { label: 'Mi pedido', href: '/orders' },
   { label: 'Contacto', href: '/#contacto' },
 ]

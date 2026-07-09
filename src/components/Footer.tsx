@@ -6,7 +6,7 @@ const COLUMNS = [
     title: 'Tienda',
     links: [
       { label: 'Colección', href: '/catalog' },
-      { label: 'Tipos de rebozo', href: '/#categorias' },
+      { label: 'Guía de rebozo', href: '/#categorias' },
       { label: 'Más vendidos', href: '/catalog' },
       { label: 'Ofertas', href: '/catalog?tag=OFERTA' },
     ],

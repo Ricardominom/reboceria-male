@@ -98,10 +98,12 @@ export interface Config {
   globals: {
     'home-settings': HomeSetting;
     'store-settings': StoreSetting;
+    'guia-settings': GuiaSetting;
   };
   globalsSelect: {
     'home-settings': HomeSettingsSelect<false> | HomeSettingsSelect<true>;
     'store-settings': StoreSettingsSelect<false> | StoreSettingsSelect<true>;
+    'guia-settings': GuiaSettingsSelect<false> | GuiaSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -158,6 +160,10 @@ export interface Category {
    * Foto representativa que aparece en el home
    */
   image?: (number | null) | Media;
+  /**
+   * Imagen grande que aparece en la página Guía de Rebozos. Si no se sube, se usará la imagen de categoría.
+   */
+  guiaImage?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
 }
@@ -476,6 +482,7 @@ export interface CategoriesSelect<T extends boolean = true> {
   chipColor?: T;
   chipTextColor?: T;
   image?: T;
+  guiaImage?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -679,6 +686,14 @@ export interface HomeSetting {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Imagen que aparece en el lado derecho del hero de la página Guía de Rebozos. Recomendado: artesana trabajando en telar.
+   */
+  guiaHeroImage?: (number | null) | Media;
+  /**
+   * Imagen decorativa del banner final en la página Guía de Rebozos (sección "¿Ya encontraste el tejido ideal?").
+   */
+  guiaCtaImage?: (number | null) | Media;
   giftIdeas?:
     | {
         icon: string;
@@ -733,6 +748,68 @@ export interface StoreSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guia-settings".
+ */
+export interface GuiaSetting {
+  id: number;
+  /**
+   * Un bloque por cada tipo de rebozo que aparece en la Guía.
+   */
+  tipos?:
+    | {
+        /**
+         * Conecta este bloque con una categoría existente.
+         */
+        category: number | Category;
+        /**
+         * Ej: Ligereza, elegancia y tradición en cada hilo.
+         */
+        subtitle?: string | null;
+        description?: string | null;
+        /**
+         * Historia y procedencia de este tipo de rebozo.
+         */
+        originText?: string | null;
+        howToUseText?: string | null;
+        howToUseImages?:
+          | {
+              image: number | Media;
+              id?: string | null;
+            }[]
+          | null;
+        caracteristicas?:
+          | {
+              icon:
+                | 'ligero'
+                | 'fresco'
+                | 'elegante'
+                | 'versatil'
+                | 'natural'
+                | 'resistente'
+                | 'facil_cuidado'
+                | 'brillante'
+                | 'exclusivo'
+                | 'calido'
+                | 'suave'
+                | 'acogedor'
+                | 'tradicional'
+                | 'colorido'
+                | 'cultural'
+                | 'amplio'
+                | 'atemporal';
+              title: string;
+              desc: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "home-settings_select".
  */
 export interface HomeSettingsSelect<T extends boolean = true> {
@@ -754,6 +831,8 @@ export interface HomeSettingsSelect<T extends boolean = true> {
         image?: T;
         id?: T;
       };
+  guiaHeroImage?: T;
+  guiaCtaImage?: T;
   giftIdeas?:
     | T
     | {
@@ -783,6 +862,39 @@ export interface StoreSettingsSelect<T extends boolean = true> {
     | T
     | {
         text?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guia-settings_select".
+ */
+export interface GuiaSettingsSelect<T extends boolean = true> {
+  tipos?:
+    | T
+    | {
+        category?: T;
+        subtitle?: T;
+        description?: T;
+        originText?: T;
+        howToUseText?: T;
+        howToUseImages?:
+          | T
+          | {
+              image?: T;
+              id?: T;
+            };
+        caracteristicas?:
+          | T
+          | {
+              icon?: T;
+              title?: T;
+              desc?: T;
+              id?: T;
+            };
         id?: T;
       };
   updatedAt?: T;
