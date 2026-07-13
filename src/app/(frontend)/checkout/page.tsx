@@ -18,7 +18,11 @@ export default async function CheckoutPage() {
   return (
     <>
       <CartGuard />
-      <CheckoutForm bankDetails={bankDetails} />
+      <CheckoutForm
+        bankDetails={bankDetails}
+        expressShippingCost={settings.expressShippingCost ?? 0}
+        expressShippingDays={settings.expressShippingDays ?? '1–2 días hábiles'}
+      />
     </>
   )
 }

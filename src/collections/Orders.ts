@@ -8,7 +8,14 @@ export const Orders: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'customerName',
-    defaultColumns: ['customerName', 'customerEmail', 'total', 'status', 'createdAt'],
+    defaultColumns: [
+      'customerName',
+      'customerEmail',
+      'total',
+      'status',
+      'trackingNumber',
+      'createdAt',
+    ],
   },
   access: {
     // Cualquiera puede crear un pedido (el cliente al hacer checkout)
@@ -206,6 +213,43 @@ export const Orders: CollectionConfig = {
         description: 'ID de la sesión de pago en Stripe',
       },
     },
+    {
+      name: 'trackingNumber',
+      type: 'text',
+      label: 'Número de rastreo',
+      admin: { description: 'Ej: 1234567890 · Se muestra al cliente en el correo de envío' },
+    },
+    {
+      name: 'trackingCarrier',
+      type: 'select',
+      label: 'Paquetería',
+      options: [
+        { label: 'Estafeta', value: 'estafeta' },
+        { label: 'DHL', value: 'dhl' },
+        { label: 'FedEx', value: 'fedex' },
+        { label: 'J&T Express', value: 'jt' },
+        { label: 'Correos de México', value: 'correos' },
+        { label: 'Otra', value: 'otra' },
+      ],
+    },
+    {
+      name: 'reviewToken',
+      type: 'text',
+      label: 'Token de reseña',
+      admin: {
+        readOnly: true,
+        description: 'Token único para el link de reseña. Se genera automáticamente.',
+      },
+    },
+    {
+      name: 'reviewTokenUsed',
+      type: 'checkbox',
+      label: 'Reseña enviada',
+      defaultValue: false,
+      admin: {
+        description: 'Se marca automáticamente cuando el cliente escribe su reseña.',
+      },
+    },
 
     //  Estado
     {
@@ -222,5 +266,81 @@ export const Orders: CollectionConfig = {
         { label: 'Cancelado', value: 'cancelled' },
       ],
     },
+    {
+      name: 'couponCode',
+      type: 'text',
+      label: 'Cupón aplicado',
+      admin: { readOnly: true },
+    },
+    {
+      name: 'discountAmount',
+      type: 'number',
+      label: 'Descuento (MXN)',
+      defaultValue: 0,
+      admin: { readOnly: true },
+    },
   ],
+  hooks: {
+    beforeChange: [
+      ({ data, operation }) => {
+        if (operation === 'create') {
+          data.reviewToken = crypto.randomUUID()
+        }
+        return data
+      },
+    ],
+    afterChange: [
+      async ({ doc, previousDoc, operation }) => {
+        if (
+          operation === 'update' &&
+          doc.status === 'shipped' &&
+          previousDoc?.status !== 'shipped'
+        ) {
+          const { sendShippingNotification } = await import('@/lib/email')
+          sendShippingNotification({
+            to: doc.customerEmail,
+            customerName: doc.customerName,
+            orderId: doc.id,
+            trackingNumber: doc.trackingNumber ?? undefined,
+            trackingCarrier: doc.trackingCarrier ?? undefined,
+            items: (doc.items ?? []).map((item: any) => ({
+              productName: item.productName,
+              color: item.color ?? '',
+              size: item.size ?? 'Único',
+              qty: item.qty,
+            })),
+            total: doc.total,
+            address: {
+              street: doc.address?.street,
+              number: doc.address?.number ?? undefined,
+              colonia: doc.address?.colonia ?? undefined,
+              city: doc.address?.city,
+              state: doc.address?.state,
+              postalCode: doc.address?.postalCode,
+            },
+          }).catch((err: unknown) => console.error('Error enviando correo de envío:', err))
+        }
+        // — Delivered: email de reseña —
+        if (
+          operation === 'update' &&
+          doc.status === 'delivered' &&
+          previousDoc?.status !== 'delivered' &&
+          doc.reviewToken &&
+          !doc.reviewTokenUsed
+        ) {
+          const { sendReviewRequestEmail } = await import('@/lib/email')
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? ''
+          sendReviewRequestEmail({
+            to: doc.customerEmail,
+            customerName: doc.customerName,
+            products: (doc.items ?? []).map((item: any) => ({
+              name: item.productName,
+              image: null,
+            })),
+            reviewUrl: `${siteUrl}/review/${doc.reviewToken}`,
+          }).catch((err: unknown) => console.error('Error enviando correo de reseña:', err))
+        }
+      },
+    ],
+  },
 }

@@ -41,6 +41,7 @@ export function toCardData(product: Product): ProductCardData {
     color: firstVariant?.colorName ?? '',
     sizes: firstVariant?.sizes.map((s) => s.label) ?? [],
     stock: totalStock,
+    variants,
   }
 }
 

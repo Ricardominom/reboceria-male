@@ -4,13 +4,13 @@ import { useState } from 'react'
 import { useCart } from '@/store/cart'
 import type { ProductDetailData } from '@/types'
 import Link from 'next/link'
+import SizeGuideModal from './SizeGuideModal'
 
-const SHIPPING_INFO = [
+const SHIPPING_INFO_DEFAULT = [
   'Envío estándar: 3–5 días hábiles ($150 MXN)',
-  'Envío express: 1–2 días hábiles ($280 MXN)',
   'Envío gratis en compras mayores a $800 MXN',
-  'Cada rebozo se empaca con papel de china y caja especial',
-  'Rastreo en tiempo real por correo electrónico',
+  'Cada rebozo se empaca con cuidado especial',
+  'Te enviamos el número de rastreo por correo electrónico',
 ]
 
 const CARE_DEFAULT = [
@@ -21,7 +21,17 @@ const CARE_DEFAULT = [
   'Guardar doblado en una bolsa de tela transpirable',
 ]
 
-export default function ProductDetail({ product }: { product: ProductDetailData }) {
+export default function ProductDetail({
+  product,
+  shippingNotes,
+  sizeGuide,
+  sizeGuideNotes,
+}: {
+  product: ProductDetailData
+  shippingNotes?: string
+  sizeGuide?: { label: string; dimensions?: string | null; description?: string | null }[]
+  sizeGuideNotes?: string | null
+}) {
   const [selectedColor, setSelectedColor] = useState(0)
   const [selectedSize, setSelectedSize] = useState(0)
   const [qty, setQty] = useState(1)
@@ -29,6 +39,7 @@ export default function ProductDetail({ product }: { product: ProductDetailData 
   const [activeImage, setActiveImage] = useState(0)
   const [added, setAdded] = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [guideOpen, setGuideOpen] = useState(false)
 
   const addItem = useCart((s) => s.addItem)
 
@@ -234,6 +245,11 @@ export default function ProductDetail({ product }: { product: ProductDetailData 
                   </button>
                 ))}
               </div>
+              {(sizeGuide?.length ?? 0) > 0 && (
+                <button className="size-guide-trigger" onClick={() => setGuideOpen(true)}>
+                  📏 ¿Cómo elegir mi talla?
+                </button>
+              )}
             </div>
           )}
 
@@ -309,9 +325,11 @@ export default function ProductDetail({ product }: { product: ProductDetailData 
               {
                 id: 'envio',
                 label: 'ENVÍO Y DEVOLUCIONES',
-                content: null,
+                content: shippingNotes
+                  ? shippingNotes.split('\n').filter(Boolean).join('. ')
+                  : null,
                 type: 'list' as const,
-                fallback: SHIPPING_INFO,
+                fallback: SHIPPING_INFO_DEFAULT,
               },
             ].map((item) => (
               <div key={item.id} className="accordion-item">
@@ -379,6 +397,13 @@ export default function ProductDetail({ product }: { product: ProductDetailData 
             </>
           )}
         </div>
+      )}
+      {guideOpen && (
+        <SizeGuideModal
+          sizes={sizeGuide ?? []}
+          notes={sizeGuideNotes}
+          onClose={() => setGuideOpen(false)}
+        />
       )}
     </div>
   )

@@ -7,6 +7,8 @@ import ProductDetail from '@/components/ProductDetail'
 import ProductCard from '@/components/ProductCard'
 import type { ProductDetailData } from '@/types'
 import type { Metadata } from 'next'
+import ReviewList from '@/components/ReviewList'
+import type { Review } from '@/payload-types'
 
 export async function generateMetadata({
   params,
@@ -55,6 +57,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const product = docs[0]
   if (!product) notFound()
+  const storeSettings = await payload.findGlobal({ slug: 'store-settings', depth: 0 })
 
   // ─── Productos relacionados (misma categoría) ────────────────────────────
   const categoryId =
@@ -77,6 +80,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       ).docs
     : []
 
+  const { docs: reviews } = await payload.find({
+    collection: 'reviews',
+    where: {
+      and: [{ product: { equals: product.id } }, { status: { equals: 'approved' } }],
+    },
+    sort: '-createdAt',
+    limit: 50,
+  })
+
   // ─── Serializa los datos para el Client Component ────────────────────────
   const detail: ProductDetailData = {
     id: product.id,
@@ -96,7 +108,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   return (
     <div>
-      <ProductDetail product={detail} />
+      <ProductDetail
+        product={detail}
+        shippingNotes={storeSettings.shippingNotes ?? undefined}
+        sizeGuide={(storeSettings.sizeGuide ?? []) as any[]}
+        sizeGuideNotes={storeSettings.sizeGuideNotes ?? undefined}
+      />
+
+      {/* ── Reseñas ── */}
+      <section className="reviews-section">
+        <h2 className="reviews-section-title">Reseñas del producto</h2>
+        <ReviewList reviews={reviews as Review[]} />
+      </section>
 
       {/* ── Productos relacionados ── */}
       {related.length > 0 && (

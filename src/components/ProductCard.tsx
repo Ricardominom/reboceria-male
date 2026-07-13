@@ -4,37 +4,78 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { useCart } from '@/store/cart'
 import type { ProductCardData } from '@/types'
+import { useWishlist } from '@/store/wishlist'
 
 export default function ProductCard({ product }: { product: ProductCardData }) {
+  const [variantIdx, setVariantIdx] = useState(0)
+  const [sizeOpen, setSizeOpen] = useState(false)
   const [added, setAdded] = useState(false)
   const addItem = useCart((s) => s.addItem)
+  const toggleWishlist = useWishlist((s) => s.toggle)
+  const isInWishlist = useWishlist((s) => s.isInWishlist)
+  const wished = isInWishlist(product.id)
+
+  const currentVariant = product.variants[variantIdx]
+  const sizes = currentVariant?.sizes ?? []
+  const availableSizes = sizes.filter((s) => s.stock > 0)
+  const hasMultipleSizes = availableSizes.length > 1
+  const image = currentVariant?.images[0] ?? product.image
+  const variantStock = sizes.reduce((sum, s) => sum + s.stock, 0)
+  const agotado = variantStock === 0
+
+  const handleColorChange = (idx: number) => {
+    setVariantIdx(idx)
+    setSizeOpen(false)
+  }
 
   const handleAdd = () => {
+    if (agotado) return
+    if (hasMultipleSizes) {
+      setSizeOpen((o) => !o)
+      return
+    }
+    const s = availableSizes[0]
+    if (!s) return
     addItem({
       id: product.id,
       name: product.name,
       short: product.short ?? product.name,
-      price: product.price,
-      color: product.color,
-      size: product.sizes[0] ?? 'Único',
-      image: product.image,
+      price: s.price,
+      color: currentVariant?.colorName ?? product.color,
+      size: s.label,
+      image,
     })
     setAdded(true)
     setTimeout(() => setAdded(false), 1800)
   }
 
-  const agotado = product.stock === 0
+  const handleSizeAdd = (s: { label: string; price: number; stock: number }) => {
+    if (s.stock === 0) return
+    addItem({
+      id: product.id,
+      name: product.name,
+      short: product.short ?? product.name,
+      price: s.price,
+      color: currentVariant?.colorName ?? product.color,
+      size: s.label,
+      image,
+    })
+    setAdded(true)
+    setSizeOpen(false)
+    setTimeout(() => setAdded(false), 1800)
+  }
+
+  const lowStock = !agotado && variantStock <= 3
 
   return (
     <div className="product-card">
       {/* Imagen */}
       <Link href={`/products/${product.slug}`} className="product-card-image">
-        {product.image ? (
-          <img src={product.image} alt={product.name} />
+        {image ? (
+          <img src={image} alt={product.name} />
         ) : (
           <div className="product-card-placeholder">📷</div>
         )}
-
         {product.tag && (
           <span
             className="product-tag"
@@ -52,10 +93,9 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
             {product.tag}
           </span>
         )}
-
-        {typeof product.stock === 'number' && product.stock > 0 && product.stock <= 3 && (
+        {lowStock && (
           <span className="product-tag" style={{ background: '#b45309', bottom: 8, top: 'auto' }}>
-            ¡Últimas {product.stock} piezas!
+            ¡Últimas {variantStock} piezas!
           </span>
         )}
       </Link>
@@ -75,26 +115,66 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
           </div>
         )}
 
+        {/* Swatches de color */}
+        {product.variants.length > 1 && (
+          <div className="card-swatches">
+            {product.variants.map((v, i) => (
+              <button
+                key={i}
+                onClick={() => handleColorChange(i)}
+                className={`card-swatch ${variantIdx === i ? 'card-swatch--active' : ''}`}
+                style={{ background: v.colorHex ?? '#ccc' }}
+                title={v.colorName}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Selector de talla */}
+        {sizeOpen && (
+          <div className="card-size-picker">
+            {sizes.map((s, i) => (
+              <button
+                key={i}
+                disabled={s.stock === 0}
+                onClick={() => handleSizeAdd(s)}
+                className={`card-size-btn ${s.stock === 0 ? 'card-size-btn--disabled' : ''}`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="product-card-footer">
           <div className="product-card-price">
             <span className="price-current">
-              ${product.price.toLocaleString('es-MX')} <small>MXN</small>
+              ${(availableSizes[0]?.price ?? product.price).toLocaleString('es-MX')}{' '}
+              <small>MXN</small>
             </span>
             {product.comparePrice && (
               <span className="price-compare">${product.comparePrice.toLocaleString('es-MX')}</span>
             )}
           </div>
-
           <button
-            className="product-card-wishlist"
-            aria-label="Favorito"
-            onClick={(e) => e.preventDefault()}
+            className={`product-card-wishlist ${wished ? 'product-card-wishlist--active' : ''}`}
+            aria-label={wished ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+            onClick={(e) => {
+              e.preventDefault()
+              toggleWishlist({
+                id: product.id,
+                name: product.name,
+                slug: product.slug,
+                image: product.image,
+                price: availableSizes[0]?.price ?? product.price,
+              })
+            }}
           >
             <svg
               width="16"
               height="16"
               viewBox="0 0 24 24"
-              fill="none"
+              fill={wished ? 'currentColor' : 'none'}
               stroke="currentColor"
               strokeWidth="2"
             >
@@ -102,6 +182,20 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
             </svg>
           </button>
         </div>
+
+        <button
+          onClick={handleAdd}
+          disabled={agotado}
+          className={`card-add-btn ${added ? 'card-add-btn--done' : ''} ${agotado ? 'card-add-btn--disabled' : ''}`}
+        >
+          {agotado
+            ? 'Agotado'
+            : added
+              ? '✓ ¡Agregado!'
+              : sizeOpen
+                ? 'Elige una talla ↑'
+                : '+ Agregar'}
+        </button>
       </div>
     </div>
   )
