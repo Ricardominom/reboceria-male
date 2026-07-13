@@ -33,6 +33,8 @@ export type CreateOrderInput = {
     bankClabe: string
     transferNotes: string
   }
+  couponCode?: string
+  discountAmount?: number
 }
 
 export async function createOrder(input: CreateOrderInput) {
@@ -87,6 +89,8 @@ export async function createOrder(input: CreateOrderInput) {
         total: input.total,
         paymentMethod: input.paymentMethod,
         status: 'pending',
+        couponCode: input.couponCode,
+        discountAmount: input.discountAmount ?? 0,
       },
     })
 
@@ -151,6 +155,19 @@ export async function createOrder(input: CreateOrderInput) {
           : []),
       ],
 
+      // Descuento con cupón
+      ...(input.discountAmount && input.discountAmount > 0
+        ? await (async () => {
+            const stripeCoupon = await stripe.coupons.create({
+              amount_off: Math.round(input.discountAmount! * 100),
+              currency: 'mxn',
+              duration: 'once',
+              name: `Descuento: ${input.couponCode}`,
+            })
+            return { discounts: [{ coupon: stripeCoupon.id }] }
+          })()
+        : {}),
+
       // Métodos de pago según selección
       payment_method_types: input.paymentMethod === 'oxxo' ? ['oxxo'] : ['card'],
 
@@ -166,7 +183,10 @@ export async function createOrder(input: CreateOrderInput) {
       cancel_url: `${baseUrl}/checkout/cancel`,
 
       // Guardamos el ID del pedido para actualizarlo en el webhook
-      metadata: { orderId: String(order.id) },
+      metadata: {
+        orderId: String(order.id),
+        couponCode: input.couponCode ?? '',
+      },
     })
 
     return {

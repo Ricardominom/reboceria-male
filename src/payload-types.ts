@@ -73,6 +73,8 @@ export interface Config {
     media: Media;
     products: Product;
     orders: Order;
+    reviews: Review;
+    coupons: Coupon;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -86,6 +88,8 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
+    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
+    coupons: CouponsSelect<false> | CouponsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -99,11 +103,13 @@ export interface Config {
     'home-settings': HomeSetting;
     'store-settings': StoreSetting;
     'guia-settings': GuiaSetting;
+    'faq-settings': FaqSetting;
   };
   globalsSelect: {
     'home-settings': HomeSettingsSelect<false> | HomeSettingsSelect<true>;
     'store-settings': StoreSettingsSelect<false> | StoreSettingsSelect<true>;
     'guia-settings': GuiaSettingsSelect<false> | GuiaSettingsSelect<true>;
+    'faq-settings': FaqSettingsSelect<false> | FaqSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -377,7 +383,81 @@ export interface Order {
    * ID de la sesión de pago en Stripe
    */
   stripeSessionId?: string | null;
+  /**
+   * Ej: 1234567890 · Se muestra al cliente en el correo de envío
+   */
+  trackingNumber?: string | null;
+  trackingCarrier?: ('estafeta' | 'dhl' | 'fedex' | 'jt' | 'correos' | 'otra') | null;
+  /**
+   * Token único para el link de reseña. Se genera automáticamente.
+   */
+  reviewToken?: string | null;
+  /**
+   * Se marca automáticamente cuando el cliente escribe su reseña.
+   */
+  reviewTokenUsed?: boolean | null;
   status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
+  couponCode?: string | null;
+  discountAmount?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews".
+ */
+export interface Review {
+  id: number;
+  product: number | Product;
+  author: string;
+  /**
+   * No se muestra públicamente
+   */
+  email: string;
+  rating: number;
+  title?: string | null;
+  body: string;
+  status?: ('pending' | 'approved' | 'rejected') | null;
+  /**
+   * Se marca automáticamente cuando la reseña viene de un comprador real
+   */
+  verified?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons".
+ */
+export interface Coupon {
+  id: number;
+  /**
+   * Ej: VERANO20 (sin espacios, mayúsculas)
+   */
+  code: string;
+  type: 'percentage' | 'fixed';
+  /**
+   * Para porcentaje: 20 = 20% de descuento. Para monto fijo: 100 = $100 MXN.
+   */
+  value: number;
+  /**
+   * Subtotal mínimo requerido para aplicar el cupón. 0 = sin mínimo.
+   */
+  minPurchase?: number | null;
+  /**
+   * Dejar vacío para usos ilimitados.
+   */
+  maxUses?: number | null;
+  usedCount?: number | null;
+  /**
+   * Dejar vacío para que nunca venza.
+   */
+  expiresAt?: string | null;
+  active?: boolean | null;
+  /**
+   * Solo visible en el admin. Ej: Campaña de verano 2026.
+   */
+  description?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -428,6 +508,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'orders';
         value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'reviews';
+        value: number | Review;
+      } | null)
+    | ({
+        relationTo: 'coupons';
+        value: number | Coupon;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -618,7 +706,46 @@ export interface OrdersSelect<T extends boolean = true> {
   paymentMethod?: T;
   stripePaymentIntentId?: T;
   stripeSessionId?: T;
+  trackingNumber?: T;
+  trackingCarrier?: T;
+  reviewToken?: T;
+  reviewTokenUsed?: T;
   status?: T;
+  couponCode?: T;
+  discountAmount?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews_select".
+ */
+export interface ReviewsSelect<T extends boolean = true> {
+  product?: T;
+  author?: T;
+  email?: T;
+  rating?: T;
+  title?: T;
+  body?: T;
+  status?: T;
+  verified?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons_select".
+ */
+export interface CouponsSelect<T extends boolean = true> {
+  code?: T;
+  type?: T;
+  value?: T;
+  minPurchase?: T;
+  maxUses?: T;
+  usedCount?: T;
+  expiresAt?: T;
+  active?: T;
+  description?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -743,6 +870,71 @@ export interface StoreSetting {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Número con código de país sin espacios. Ej: 525512345678
+   */
+  whatsapp?: string | null;
+  /**
+   * El que verán los clientes en la sección de contacto
+   */
+  contactEmail?: string | null;
+  /**
+   * Ej: 55 1234 5678
+   */
+  phone?: string | null;
+  /**
+   * Ej: Lunes a viernes, 9:00 – 18:00 h
+   */
+  businessHours?: string | null;
+  /**
+   * Una línea por dato. Aparece en el acordeón "Envío y devoluciones" de cada producto. Ej: Envío estándar 3–5 días hábiles ($150 MXN)
+   */
+  shippingNotes?: string | null;
+  /**
+   * URL completa. Ej: https://instagram.com/rebozosmary
+   */
+  socialInstagram?: string | null;
+  /**
+   * URL completa. Ej: https://facebook.com/rebozosmary
+   */
+  socialFacebook?: string | null;
+  /**
+   * URL completa. Ej: https://tiktok.com/@rebozosmary
+   */
+  socialTiktok?: string | null;
+  /**
+   * URL completa. Ej: https://pinterest.com/rebozosmary
+   */
+  socialPinterest?: string | null;
+  /**
+   * Tabla que aparece en el modal "¿Cómo elegir mi talla?" en cada producto
+   */
+  sizeGuide?:
+    | {
+        label: string;
+        /**
+         * Ej: 60 × 180 cm
+         */
+        dimensions?: string | null;
+        /**
+         * Ej: Usar como bufanda o chal ligero
+         */
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Texto introductorio del modal. Ej: Todos nuestros rebozos se miden de punta a punta extendidos.
+   */
+  sizeGuideNotes?: string | null;
+  /**
+   * Ej: 350. Dejar en 0 para desactivar la opción express.
+   */
+  expressShippingCost?: number | null;
+  /**
+   * Ej: 1–2 días hábiles
+   */
+  expressShippingDays?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -810,6 +1002,26 @@ export interface GuiaSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "faq-settings".
+ */
+export interface FaqSetting {
+  id: number;
+  /**
+   * Agrega, edita o reordena las preguntas arrastrando cada fila.
+   */
+  faqs?:
+    | {
+        question: string;
+        answer: string;
+        category?: ('envios' | 'pagos' | 'productos' | 'devoluciones' | 'general') | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "home-settings_select".
  */
 export interface HomeSettingsSelect<T extends boolean = true> {
@@ -864,6 +1076,26 @@ export interface StoreSettingsSelect<T extends boolean = true> {
         text?: T;
         id?: T;
       };
+  whatsapp?: T;
+  contactEmail?: T;
+  phone?: T;
+  businessHours?: T;
+  shippingNotes?: T;
+  socialInstagram?: T;
+  socialFacebook?: T;
+  socialTiktok?: T;
+  socialPinterest?: T;
+  sizeGuide?:
+    | T
+    | {
+        label?: T;
+        dimensions?: T;
+        description?: T;
+        id?: T;
+      };
+  sizeGuideNotes?: T;
+  expressShippingCost?: T;
+  expressShippingDays?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -895,6 +1127,23 @@ export interface GuiaSettingsSelect<T extends boolean = true> {
               desc?: T;
               id?: T;
             };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "faq-settings_select".
+ */
+export interface FaqSettingsSelect<T extends boolean = true> {
+  faqs?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        category?: T;
         id?: T;
       };
   updatedAt?: T;

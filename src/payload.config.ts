@@ -16,6 +16,9 @@ import { HomeSettings } from './globals/HomeSettings'
 import { es } from '@payloadcms/translations/languages/es'
 import { StoreSettings } from './globals/StoreSettings'
 import { GuiaSettings } from './globals/GuiaSettings'
+import { FaqSettings } from './globals/FaqSettings'
+import { Reviews } from './collections/Reviews'
+import { Coupons } from './collections/Coupons'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -42,8 +45,8 @@ export default buildConfig({
       Component: '@/components/admin/Avatar',
     },
   },
-  collections: [Categories, Colors, Users, Media, Products, Orders],
-  globals: [HomeSettings, StoreSettings, GuiaSettings],
+  collections: [Categories, Colors, Users, Media, Products, Orders, Reviews, Coupons],
+  globals: [HomeSettings, StoreSettings, GuiaSettings, FaqSettings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

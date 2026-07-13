@@ -5,6 +5,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useCart } from '@/store/cart'
 import Image from 'next/image'
+import { Fragment } from 'react'
+import { useWishlist } from '@/store/wishlist'
 
 // ─── PromoBar ────────────────────────────────────────────────────────────────
 
@@ -48,7 +50,7 @@ const NAV_LINKS = [
   { label: 'Colecciones', href: '/catalog' },
   { label: 'Guía de Rebozos', href: '/guia' },
   { label: 'Mi pedido', href: '/orders' },
-  { label: 'Contacto', href: '/#contacto' },
+  { label: 'Contacto', href: '/contacto' },
 ]
 
 export default function Navbar({
@@ -66,6 +68,7 @@ export default function Navbar({
 
   const itemCount = useCart((s) => s.itemCount())
   const openCart = useCart((s) => s.openCart)
+  const wishlistCount = useWishlist((s) => s.items.length)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -177,6 +180,26 @@ export default function Navbar({
             </svg>
           </Link>
 
+          {/* Wishlist */}
+          <Link
+            href="/wishlist"
+            className="btn-icon"
+            aria-label="Favoritos"
+            style={{ position: 'relative' }}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            {wishlistCount > 0 && <span className="cart-badge">{wishlistCount}</span>}
+          </Link>
+
           {/* Carrito */}
           <button
             onClick={openCart}
@@ -214,14 +237,26 @@ export default function Navbar({
       {menuOpen && (
         <div className="mobile-menu">
           {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="mobile-menu-link"
-              onClick={() => setMenuOpen(false)}
-            >
-              {link.label}
-            </Link>
+            <Fragment key={link.href}>
+              <Link
+                href={link.href}
+                className="mobile-menu-link"
+                onClick={() => setMenuOpen(false)}
+              >
+                {link.label}
+              </Link>
+              {link.href === '/guia' &&
+                tiposNav.map((tipo) => (
+                  <Link
+                    key={tipo}
+                    href={`/guia/${toSlug(tipo)}`}
+                    className="mobile-menu-sublink"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {tipo}
+                  </Link>
+                ))}
+            </Fragment>
           ))}
         </div>
       )}

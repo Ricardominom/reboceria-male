@@ -31,6 +31,12 @@ export default async function HomePage() {
   })
 
   const homeSettings = await payload.findGlobal({ slug: 'home-settings', depth: 1 })
+  const { docs: recentReviews } = await payload.find({
+    collection: 'reviews',
+    where: { status: { equals: 'approved' } },
+    sort: '-createdAt',
+    limit: 5,
+  })
 
   const { docs: allCategories } = await payload.find({
     collection: 'categories',
@@ -274,7 +280,13 @@ export default async function HomePage() {
 
       {/* ── Testimonios ── */}
       <section className="section-testimonios">
-        <TestimonialsCarousel />
+        <TestimonialsCarousel
+          reviews={recentReviews.map((r) => ({
+            quote: r.body,
+            author: r.author,
+            rating: r.rating,
+          }))}
+        />
         <div className="testimonios-images">
           {testimonialUrls.slice(0, 4).map((url, i) => (
             <img key={i} src={url} alt="" className="testimonios-img" />

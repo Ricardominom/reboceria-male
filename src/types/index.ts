@@ -31,6 +31,7 @@ export interface ProductCardData {
   color: string
   sizes: string[]
   stock: number
+  variants: Variant[]
 }
 
 export interface ProductDetailData {

@@ -116,7 +116,7 @@ export default async function CatalogPage({
           <div>
             <h1 className="catalog-title">{title}</h1>
             <p className="catalog-count">
-              {cards.length} {cards.length === 1 ? 'producto' : 'productos'}
+              {totalDocs} {totalDocs === 1 ? 'producto' : 'productos'}
               {q && (
                 <>
                   {' '}

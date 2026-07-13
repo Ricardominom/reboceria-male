@@ -71,20 +71,33 @@ function Field({
 }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
-export default function CheckoutForm({ bankDetails }: { bankDetails: BankDetails }) {
+export default function CheckoutForm({
+  bankDetails,
+  expressShippingCost = 0,
+  expressShippingDays = '1–2 días hábiles',
+}: {
+  bankDetails: BankDetails
+  expressShippingCost?: number
+  expressShippingDays?: string
+}) {
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [orderDone, setOrderDone] = useState(false)
   const [orderId, setOrderId] = useState<number | null>(null)
   const [serverError, setServerError] = useState('')
   const [orderTotal, setOrderTotal] = useState(0)
+  const [shippingMethod, setShippingMethod] = useState<'standard' | 'express'>('standard')
 
   const items = useCart((s) => s.items)
   const subtotal = useCart((s) => s.subtotal())
   const clearCart = useCart((s) => s.clearCart)
 
-  const shipping = subtotal >= 800 ? 0 : 150
-  const total = subtotal + shipping
+  const coupon = useCart((s) => s.coupon)
+  const discount = useCart((s) => s.discount())
+
+  const standardShipping = subtotal >= 800 ? 0 : 150
+  const shipping = shippingMethod === 'express' ? expressShippingCost : standardShipping
+  const total = Math.max(0, subtotal - discount + shipping)
 
   const {
     register,
@@ -122,6 +135,8 @@ export default function CheckoutForm({ bankDetails }: { bankDetails: BankDetails
       shippingCost: shipping,
       total,
       bankDetails,
+      couponCode: coupon?.code,
+      discountAmount: discount,
     })
 
     setSubmitting(false)
@@ -292,6 +307,48 @@ export default function CheckoutForm({ bankDetails }: { bankDetails: BankDetails
                   errors={errors}
                 />
               </div>
+              {/* Método de envío */}
+              <div className="shipping-options">
+                <p className="detail-label" style={{ marginBottom: '.75rem' }}>
+                  MÉTODO DE ENVÍO
+                </p>
+
+                <label
+                  className={`shipping-option ${shippingMethod === 'standard' ? 'shipping-option--active' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="shippingMethod"
+                    checked={shippingMethod === 'standard'}
+                    onChange={() => setShippingMethod('standard')}
+                  />
+                  <div className="shipping-option-info">
+                    <span className="shipping-option-name">Envío estándar</span>
+                    <span className="shipping-option-days">3–5 días hábiles</span>
+                  </div>
+                  <span className="shipping-option-price">
+                    {standardShipping === 0 ? '✓ GRATIS' : `$${standardShipping} MXN`}
+                  </span>
+                </label>
+
+                {expressShippingCost > 0 && (
+                  <label
+                    className={`shipping-option ${shippingMethod === 'express' ? 'shipping-option--active' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="shippingMethod"
+                      checked={shippingMethod === 'express'}
+                      onChange={() => setShippingMethod('express')}
+                    />
+                    <div className="shipping-option-info">
+                      <span className="shipping-option-name">⚡ Envío express</span>
+                      <span className="shipping-option-days">{expressShippingDays}</span>
+                    </div>
+                    <span className="shipping-option-price">${expressShippingCost} MXN</span>
+                  </label>
+                )}
+              </div>
             </div>
           )}
 
@@ -395,9 +452,16 @@ export default function CheckoutForm({ bankDetails }: { bankDetails: BankDetails
               <span>Subtotal</span>
               <span>${subtotal.toLocaleString('es-MX')}</span>
             </div>
+            {discount > 0 && (
+              <div className="summary-row" style={{ color: '#2e7d32', fontWeight: 600 }}>
+                <span>Descuento ({coupon?.code})</span>
+                <span>−${discount.toLocaleString('es-MX')}</span>
+              </div>
+            )}
             <div className="summary-row">
               <span style={{ color: shipping === 0 ? '#2E7D32' : 'var(--text-soft)' }}>
-                Envío {shipping === 0 && '✓ GRATIS'}
+                {shippingMethod === 'express' ? '⚡ Express' : 'Envío'}
+                {shipping === 0 && ' ✓ GRATIS'}
               </span>
               <span style={{ color: shipping === 0 ? '#2E7D32' : 'var(--text-soft)' }}>
                 {shipping === 0 ? 'Gratis' : `$${shipping} MXN`}
