@@ -73,7 +73,12 @@ export default async function FaqPage() {
   const payload = await getPayload({ config: await config })
   const faqSettings = await payload.findGlobal({ slug: 'faq-settings', depth: 0 })
 
-  const faqs = faqSettings.faqs && faqSettings.faqs.length > 0 ? faqSettings.faqs : FALLBACK_FAQS
+  const faqs: Array<{
+    question: string
+    answer: string
+    category?: string | null
+    id?: string | null
+  }> = faqSettings.faqs && faqSettings.faqs.length > 0 ? faqSettings.faqs : FALLBACK_FAQS
 
   const grouped = CATEGORY_ORDER.reduce<Record<string, typeof faqs>>((acc, cat) => {
     const items = faqs.filter((f: any) => (f.category ?? 'general') === cat)
