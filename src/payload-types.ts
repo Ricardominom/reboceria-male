@@ -373,6 +373,7 @@ export interface Order {
    * Gratis si el subtotal supera $800 MXN
    */
   shippingCost: number;
+  shippingMethod?: ('standard' | 'express') | null;
   total: number;
   paymentMethod?: ('tarjeta' | 'oxxo' | 'transferencia') | null;
   /**
@@ -702,6 +703,7 @@ export interface OrdersSelect<T extends boolean = true> {
       };
   subtotal?: T;
   shippingCost?: T;
+  shippingMethod?: T;
   total?: T;
   paymentMethod?: T;
   stripePaymentIntentId?: T;

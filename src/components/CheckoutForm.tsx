@@ -133,6 +133,7 @@ export default function CheckoutForm({
       })),
       subtotal,
       shippingCost: shipping,
+      shippingMethod,
       total,
       bankDetails,
       couponCode: coupon?.code,
@@ -169,8 +170,8 @@ export default function CheckoutForm({
           Tu pedido <strong>#{orderId}</strong> fue registrado.
         </p>
         <p className="success-sub">
-          Recibirás un correo con los detalles. Tu rebozo artesanal estará en camino en 1–2 días
-          hábiles.
+          Recibirás un correo con los detalles. Tu rebozo artesanal estará en camino en{' '}
+          {shippingMethod === 'express' ? '1–2' : '3–5'} días hábiles.
         </p>
         <Link href="/" className="btn-primary">
           Volver a la tienda →

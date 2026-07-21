@@ -26,6 +26,7 @@ export type CreateOrderInput = {
   }>
   subtotal: number
   shippingCost: number
+  shippingMethod?: 'standard' | 'express'
   total: number
   bankDetails?: {
     bankName: string
@@ -86,6 +87,7 @@ export async function createOrder(input: CreateOrderInput) {
         })),
         subtotal: input.subtotal,
         shippingCost: input.shippingCost,
+        shippingMethod: input.shippingMethod ?? 'standard',
         total: input.total,
         paymentMethod: input.paymentMethod,
         status: 'pending',
@@ -146,7 +148,10 @@ export async function createOrder(input: CreateOrderInput) {
               {
                 price_data: {
                   currency: 'mxn',
-                  product_data: { name: 'Envío estándar' },
+                  product_data: {
+                    name:
+                      input.shippingMethod === 'express' ? 'Envío express ⚡' : 'Envío estándar',
+                  },
                   unit_amount: Math.round(input.shippingCost * 100),
                 },
                 quantity: 1,
@@ -186,6 +191,7 @@ export async function createOrder(input: CreateOrderInput) {
       metadata: {
         orderId: String(order.id),
         couponCode: input.couponCode ?? '',
+        shippingMethod: input.shippingMethod ?? 'standard',
       },
     })
 

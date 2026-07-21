@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useCart } from '@/store/cart'
 import type { ProductCardData } from '@/types'
 import { useWishlist } from '@/store/wishlist'
@@ -14,6 +14,8 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
   const toggleWishlist = useWishlist((s) => s.toggle)
   const isInWishlist = useWishlist((s) => s.isInWishlist)
   const wished = isInWishlist(product.id)
+  const swatchesRef = useRef<HTMLDivElement>(null)
+  const [visibleCount, setVisibleCount] = useState(product.variants.length)
 
   const currentVariant = product.variants[variantIdx]
   const sizes = currentVariant?.sizes ?? []
@@ -22,6 +24,25 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
   const image = currentVariant?.images[0] ?? product.image
   const variantStock = sizes.reduce((sum, s) => sum + s.stock, 0)
   const agotado = variantStock === 0
+
+  useEffect(() => {
+    const el = swatchesRef.current
+    if (!el) return
+    const calculate = () => {
+      const W = el.clientWidth
+      const total = product.variants.length
+      const maxAll = Math.floor((W + 6) / 22)
+      if (total <= maxAll) {
+        setVisibleCount(total)
+      } else {
+        setVisibleCount(Math.max(1, Math.floor((W - 32) / 22)))
+      }
+    }
+    const ro = new ResizeObserver(calculate)
+    ro.observe(el)
+    calculate()
+    return () => ro.disconnect()
+  }, [product.variants.length])
 
   const handleColorChange = (idx: number) => {
     setVariantIdx(idx)
@@ -117,8 +138,8 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
 
         {/* Swatches de color */}
         {product.variants.length > 1 && (
-          <div className="card-swatches">
-            {product.variants.map((v, i) => (
+          <div className="card-swatches" ref={swatchesRef}>
+            {product.variants.slice(0, visibleCount).map((v, i) => (
               <button
                 key={i}
                 onClick={() => handleColorChange(i)}
@@ -127,6 +148,9 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
                 title={v.colorName}
               />
             ))}
+            {product.variants.length > visibleCount && (
+              <span className="card-swatch-more">+{product.variants.length - visibleCount}</span>
+            )}
           </div>
         )}
 

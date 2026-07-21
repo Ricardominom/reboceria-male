@@ -12,6 +12,7 @@ export default async function SuccessPage({
   let customerEmail = ''
   let orderId = ''
   let isOxxo = false
+  let shippingMethod = 'standard'
 
   if (session_id) {
     try {
@@ -19,9 +20,8 @@ export default async function SuccessPage({
       customerEmail = session.customer_email ?? ''
       orderId = session.metadata?.orderId ?? ''
       isOxxo = session.payment_status === 'unpaid'
-    } catch {
-      // Si falla la consulta, mostramos éxito genérico
-    }
+      shippingMethod = session.metadata?.shippingMethod ?? 'standard'
+    } catch {}
   }
 
   return (
@@ -61,7 +61,10 @@ export default async function SuccessPage({
               </>
             )}
           </p>
-          <p className="success-sub">Tu rebozo artesanal estará en camino en 1–2 días hábiles.</p>
+          <p className="success-sub">
+            Tu rebozo artesanal estará en camino en {shippingMethod === 'express' ? '1–2' : '3–5'}{' '}
+            días hábiles.
+          </p>
         </>
       )}
 

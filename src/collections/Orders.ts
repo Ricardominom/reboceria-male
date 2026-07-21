@@ -180,6 +180,17 @@ export const Orders: CollectionConfig = {
       },
     },
     {
+      name: 'shippingMethod',
+      type: 'select',
+      label: 'Método de envío',
+      defaultValue: 'standard',
+      options: [
+        { label: 'Estándar (3–5 días)', value: 'standard' },
+        { label: 'Express (1–2 días)', value: 'express' },
+      ],
+      admin: { readOnly: true },
+    },
+    {
       name: 'total',
       type: 'number',
       label: 'Total (MXN)',

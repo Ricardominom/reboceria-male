@@ -4914,6 +4914,8 @@ body {
   display: flex;
   gap: 6px;
   margin: 6px 0 2px;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .card-swatch {
@@ -4924,11 +4926,27 @@ body {
   cursor: pointer;
   padding: 0;
   transition: border-color 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.card-swatch-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--rm-ink);
+  border: 1.5px solid currentColor;
+  border-radius: 99px;
+  padding: 0 5px;
+  height: 16px;
+  opacity: 0.5;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .card-swatch--active {
   border-color: var(--rm-wine);
-  transform: scale(1.2);
 }
 
 .card-size-picker {
@@ -5751,4 +5769,88 @@ body {
   font-size: .9rem;
   color: var(--rm-wine);
   white-space: nowrap;
+}
+
+.card-swatch-more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--rm-ink);
+  background: transparent;
+  border: 1px solid var(--rm-ink);
+  border-radius: 99px;
+  padding: 0 5px;
+  height: 16px;
+  opacity: 0.55;
+  letter-spacing: 0;
+}
+
+.drawer-shipping-note {
+  font-size: 11px;
+  color: var(--text-soft);
+  margin: 2px 0 8px;
+  opacity: 0.7;
+}
+
+/* ── Cookie Banner ──────────────────────────────────────────── */
+.cookie-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  background: var(--rm-ink);
+  color: #f6f1eb;
+  font-size: 13px;
+  line-height: 1.5;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cookie-banner-text {
+  flex: 1;
+  margin: 0;
+}
+
+.cookie-banner-link {
+  color: #e8c4a0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cookie-banner-btn {
+  flex-shrink: 0;
+  padding: 7px 18px;
+  background: var(--rm-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.cookie-banner-btn:hover {
+  opacity: 0.85;
+}
+
+@media (max-width: 480px) {
+  .cookie-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px 18px;
+  }
+
+  .cookie-banner-btn {
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+  }
 }

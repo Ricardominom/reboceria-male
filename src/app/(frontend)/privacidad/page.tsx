@@ -79,7 +79,20 @@ export default function PrivacidadPage() {
         </div>
 
         <div className="legal-section">
-          <h2>6. Cookies</h2>
+          <h2>6. Autoridad competente</h2>
+          <p>
+            Si consideras que tu derecho a la protección de datos personales ha sido lesionado por
+            alguna conducta u omisión de nuestra parte, puedes interponer una queja o denuncia ante
+            el INAI. Para más información visita{' '}
+            <a href="https://www.inai.org.mx" target="_blank" rel="noopener noreferrer">
+              www.inai.org.mx
+            </a>
+            .
+          </p>
+        </div>
+
+        <div className="legal-section">
+          <h2>7. Cookies</h2>
           <p>
             Este sitio utiliza cookies técnicas esenciales para el funcionamiento del carrito de
             compras. No utilizamos cookies de rastreo publicitario de terceros.
@@ -87,7 +100,7 @@ export default function PrivacidadPage() {
         </div>
 
         <div className="legal-section">
-          <h2>7. Cambios a este aviso</h2>
+          <h2>8. Cambios a este aviso</h2>
           <p>
             Podemos actualizar este aviso en cualquier momento. La fecha de última actualización
             aparece al inicio de esta página.

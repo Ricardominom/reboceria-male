@@ -61,14 +61,29 @@ export default function TerminosPage() {
           <h2>4. Envíos</h2>
           <ul>
             <li>Enviamos a toda la República Mexicana.</li>
-            <li>El tiempo de entrega estimado es de 3 a 5 días hábiles tras confirmar el pago.</li>
-            <li>Envío gratis en pedidos mayores a $800 MXN; $150 MXN en pedidos menores.</li>
+            <li>
+              <strong>Envío estándar:</strong> 3–5 días hábiles tras confirmar el pago. Gratis en
+              pedidos mayores a $800 MXN; $150 MXN en pedidos menores.
+            </li>
+            <li>
+              <strong>Envío express:</strong> 1–2 días hábiles. Disponible como opción durante el
+              proceso de compra; el costo se muestra antes de confirmar el pago.
+            </li>
             <li>Recibirás un correo con tu número de rastreo una vez que tu pedido sea enviado.</li>
           </ul>
         </div>
 
         <div className="legal-section">
-          <h2>5. Cancelaciones</h2>
+          <h2>5. Cambios y devoluciones</h2>
+          <p>
+            Tienes hasta 15 días naturales desde la entrega para solicitar un cambio o devolución.
+            Consulta todos los detalles en nuestra{' '}
+            <Link href="/devoluciones">Política de Cambios y Devoluciones</Link>.
+          </p>
+        </div>
+
+        <div className="legal-section">
+          <h2>6. Cancelaciones</h2>
           <p>
             Puedes solicitar cancelar tu pedido dentro de las primeras 2 horas después de realizada
             la compra, siempre que no haya sido enviado aún. Contáctanos de inmediato por{' '}
@@ -77,7 +92,7 @@ export default function TerminosPage() {
         </div>
 
         <div className="legal-section">
-          <h2>6. Limitación de responsabilidad</h2>
+          <h2>7. Limitación de responsabilidad</h2>
           <p>
             Rebozos Mary no se hace responsable por retrasos ocasionados por la paquetería, casos de
             fuerza mayor, ni por el uso que el cliente dé al producto.
@@ -85,7 +100,7 @@ export default function TerminosPage() {
         </div>
 
         <div className="legal-section">
-          <h2>7. Legislación aplicable</h2>
+          <h2>8. Legislación aplicable</h2>
           <p>
             Estos términos se rigen por las leyes de los Estados Unidos Mexicanos, en particular la
             Ley Federal de Protección al Consumidor (LFPC).

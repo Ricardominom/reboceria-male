@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    if (!checkRateLimit(ip, 10, 60_000)) {
+      return NextResponse.json(
+        { valid: false, error: 'Demasiados intentos. Espera un momento.' },
+        { status: 429 },
+      )
+    }
     const { code, subtotal } = await req.json()
     if (!code || typeof subtotal !== 'number') {
       return NextResponse.json({ valid: false, error: 'Datos inválidos' }, { status: 400 })

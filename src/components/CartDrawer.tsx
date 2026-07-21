@@ -168,7 +168,7 @@ export default function CartDrawer() {
 
             <div className="drawer-row">
               <span style={{ color: shipping === 0 ? '#2E7D32' : 'var(--text-soft)' }}>
-                Envío {shipping === 0 && '✓ GRATIS'}
+                {shipping === 0 ? 'Envío ✓ GRATIS' : 'Envío estándar'}
               </span>
               <span style={{ color: shipping === 0 ? '#2E7D32' : 'var(--text-soft)' }}>
                 {shipping === 0 ? 'Gratis' : `$${shipping} MXN`}
@@ -179,6 +179,12 @@ export default function CartDrawer() {
               <div className="drawer-threshold">
                 ¡Agrega ${(800 - subtotal).toLocaleString('es-MX')} más para envío gratis!
               </div>
+            )}
+
+            {shipping > 0 && (
+              <p className="drawer-shipping-note">
+                ⚡ También disponible envío express — se elige en el checkout
+              </p>
             )}
 
             <div className="drawer-total">

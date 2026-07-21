@@ -9,7 +9,7 @@ export const Reviews: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: () => true,
+    create: ({ req }) => req.user != null, // solo desde servidor con overrideAccess
     update: ({ req }) => req.user != null,
     delete: ({ req }) => req.user != null,
   },
@@ -73,4 +73,31 @@ export const Reviews: CollectionConfig = {
       },
     },
   ],
+  hooks: {
+    afterChange: [
+      async ({ doc, req }) => {
+        const productId = typeof doc.product === 'number' ? doc.product : (doc.product as any)?.id
+        if (!productId) return
+
+        const { docs } = await req.payload.find({
+          collection: 'reviews',
+          where: {
+            and: [{ product: { equals: productId } }, { status: { equals: 'approved' } }],
+          },
+          limit: 1000,
+          depth: 0,
+        })
+
+        const avg =
+          docs.length > 0 ? Math.round(docs.reduce((s, r) => s + r.rating, 0) / docs.length) : null
+
+        await req.payload.update({
+          collection: 'products',
+          id: productId,
+          data: { rating: avg ?? undefined, reviewCount: docs.length },
+          overrideAccess: true,
+        })
+      },
+    ],
+  },
 }

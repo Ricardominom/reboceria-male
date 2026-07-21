@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    if (!checkRateLimit(ip, 5, 10 * 60_000)) {
+      return NextResponse.json(
+        { error: 'Demasiados intentos. Espera unos minutos.' },
+        { status: 429 },
+      )
+    }
     const body = await req.json()
     const { token, author, email, reviews } = body
 
@@ -30,6 +38,7 @@ export async function POST(req: NextRequest) {
 
       await payload.create({
         collection: 'reviews',
+        overrideAccess: true,
         data: {
           product: r.productId,
           author,

@@ -4,7 +4,10 @@ import { notFound } from 'next/navigation'
 import TokenReviewForm from '@/components/TokenReviewForm'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = { title: 'Deja tu reseña — Rebozos Mary' }
+export const metadata: Metadata = {
+  title: 'Deja tu reseña — Rebozos Mary',
+  robots: { index: false, follow: false },
+}
 
 export default async function ReviewTokenPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params

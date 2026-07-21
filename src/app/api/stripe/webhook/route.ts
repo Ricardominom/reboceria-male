@@ -74,94 +74,120 @@ export async function POST(req: NextRequest) {
     if (orderId) {
       const payload = await getPayload({ config: await config })
 
-      await payload.update({
-        collection: 'orders',
-        id: Number(orderId),
-        data: {
-          status: 'paid',
-          stripeSessionId: session.id,
-          stripePaymentIntentId:
-            typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
-        },
-      })
-
+      // 1. Fetch del pedido primero
       const order = await payload.findByID({
         collection: 'orders',
         id: Number(orderId),
         depth: 1,
       })
 
-      if (order?.items?.length) {
-        await Promise.all(order.items.map((item: any) => reduceVariantStock(payload, item)))
-        console.log(`✓ Stock actualizado para pedido #${orderId}`)
-
-        sendOrderConfirmation({
-          to: order.customerEmail,
-          customerName: order.customerName,
-          orderId: order.id,
-          items: order.items.map((item: any) => ({
-            productName: item.productName,
-            color: item.color ?? '',
-            size: item.size ?? 'Único',
-            qty: item.qty,
-            unitPrice: item.unitPrice,
-          })),
-          subtotal: order.subtotal,
-          shippingCost: order.shippingCost,
-          total: order.total,
-          paymentMethod: 'tarjeta',
-          address: {
-            street: order.address?.street,
-            number: order.address?.number ?? undefined,
-            colonia: order.address?.colonia ?? undefined,
-            city: order.address?.city,
-            state: order.address?.state,
-            postalCode: order.address?.postalCode,
-          },
-        }).catch((err) => console.error('Error enviando email post-pago:', err))
-
-        sendAdminOrderNotification({
-          to: order.customerEmail,
-          customerName: order.customerName,
-          orderId: order.id,
-          items: order.items.map((item: any) => ({
-            productName: item.productName,
-            color: item.color ?? '',
-            size: item.size ?? 'Único',
-            qty: item.qty,
-            unitPrice: item.unitPrice,
-          })),
-          subtotal: order.subtotal,
-          shippingCost: order.shippingCost,
-          total: order.total,
-          paymentMethod: 'tarjeta',
-          address: {
-            street: order.address?.street,
-            number: order.address?.number ?? undefined,
-            colonia: order.address?.colonia ?? undefined,
-            city: order.address?.city,
-            state: order.address?.state,
-            postalCode: order.address?.postalCode,
-          },
-        }).catch((err) => console.error('Error enviando notificación al admin:', err))
+      // 2. Re-validar stock
+      let stockOk = true
+      for (const item of (order?.items ?? []) as any[]) {
+        const productId = typeof item.product === 'object' ? item.product?.id : item.product
+        if (!productId) continue
+        const product = await payload.findByID({ collection: 'products', id: productId, depth: 1 })
+        const variant = (product.variants ?? []).find((v: any) => {
+          const colorName = typeof v.color === 'object' ? v.color?.name : null
+          return colorName === item.color
+        })
+        const sizeData = (variant?.sizes ?? []).find((s: any) => s.label === item.size)
+        if (!sizeData || (sizeData.stock ?? 0) < (item.qty ?? 1)) {
+          stockOk = false
+          break
+        }
       }
 
-      console.log(`✓ Pedido #${orderId} marcado como pagado`)
-
-      // Incrementar usedCount del cupón
-      const couponCode = session.metadata?.couponCode
-      if (couponCode) {
-        const { docs: coupons } = await payload.find({
-          collection: 'coupons',
-          where: { code: { equals: couponCode } },
-          limit: 1,
+      if (!stockOk) {
+        await payload.update({
+          collection: 'orders',
+          id: Number(orderId),
+          data: { status: 'cancelled' },
         })
-        if (coupons[0]) {
-          await payload.update({
+        console.error(`⚠️ Pedido #${orderId} cancelado automáticamente por falta de stock`)
+      } else {
+        await payload.update({
+          collection: 'orders',
+          id: Number(orderId),
+          data: {
+            status: 'paid',
+            stripeSessionId: session.id,
+            stripePaymentIntentId:
+              typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
+          },
+        })
+
+        if (order?.items?.length) {
+          await Promise.all(order.items.map((item: any) => reduceVariantStock(payload, item)))
+          console.log(`✓ Stock actualizado para pedido #${orderId}`)
+
+          sendOrderConfirmation({
+            to: order.customerEmail,
+            customerName: order.customerName,
+            orderId: order.id,
+            items: order.items.map((item: any) => ({
+              productName: item.productName,
+              color: item.color ?? '',
+              size: item.size ?? 'Único',
+              qty: item.qty,
+              unitPrice: item.unitPrice,
+            })),
+            subtotal: order.subtotal,
+            shippingCost: order.shippingCost,
+            total: order.total,
+            paymentMethod: 'tarjeta',
+            address: {
+              street: order.address?.street,
+              number: order.address?.number ?? undefined,
+              colonia: order.address?.colonia ?? undefined,
+              city: order.address?.city,
+              state: order.address?.state,
+              postalCode: order.address?.postalCode,
+            },
+          }).catch((err) => console.error('Error enviando email post-pago:', err))
+
+          sendAdminOrderNotification({
+            to: order.customerEmail,
+            customerName: order.customerName,
+            orderId: order.id,
+            items: order.items.map((item: any) => ({
+              productName: item.productName,
+              color: item.color ?? '',
+              size: item.size ?? 'Único',
+              qty: item.qty,
+              unitPrice: item.unitPrice,
+            })),
+            subtotal: order.subtotal,
+            shippingCost: order.shippingCost,
+            total: order.total,
+            paymentMethod: 'tarjeta',
+            address: {
+              street: order.address?.street,
+              number: order.address?.number ?? undefined,
+              colonia: order.address?.colonia ?? undefined,
+              city: order.address?.city,
+              state: order.address?.state,
+              postalCode: order.address?.postalCode,
+            },
+          }).catch((err) => console.error('Error enviando notificación al admin:', err))
+        }
+
+        console.log(`✓ Pedido #${orderId} marcado como pagado`)
+
+        const couponCode = session.metadata?.couponCode
+        if (couponCode) {
+          const { docs: coupons } = await payload.find({
             collection: 'coupons',
-            id: coupons[0].id,
-            data: { usedCount: (coupons[0].usedCount ?? 0) + 1 },
+            where: { code: { equals: couponCode } },
+            limit: 1,
           })
+          if (coupons[0]) {
+            await payload.update({
+              collection: 'coupons',
+              id: coupons[0].id,
+              data: { usedCount: (coupons[0].usedCount ?? 0) + 1 },
+            })
+          }
         }
       }
     }
@@ -175,26 +201,106 @@ export async function POST(req: NextRequest) {
     if (orderId) {
       const payload = await getPayload({ config: await config })
 
-      await payload.update({
-        collection: 'orders',
-        id: Number(orderId),
-        data: {
-          status: 'paid',
-          stripeSessionId: session.id,
-          stripePaymentIntentId:
-            typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
-        },
-      })
-
+      // 1. Fetch del pedido primero
       const order = await payload.findByID({
         collection: 'orders',
         id: Number(orderId),
         depth: 1,
       })
 
-      if (order?.items?.length) {
-        await Promise.all(order.items.map((item: any) => reduceVariantStock(payload, item)))
-        console.log(`✓ Pedido OXXO #${orderId} confirmado y stock actualizado`)
+      // 2. Re-validar stock antes de confirmar
+      let stockOk = true
+      for (const item of (order?.items ?? []) as any[]) {
+        const productId = typeof item.product === 'object' ? item.product?.id : item.product
+        if (!productId) continue
+        const product = await payload.findByID({ collection: 'products', id: productId, depth: 1 })
+        const variant = (product.variants ?? []).find((v: any) => {
+          const colorName = typeof v.color === 'object' ? v.color?.name : null
+          return colorName === item.color
+        })
+        const sizeData = (variant?.sizes ?? []).find((s: any) => s.label === item.size)
+        if (!sizeData || (sizeData.stock ?? 0) < (item.qty ?? 1)) {
+          stockOk = false
+          break
+        }
+      }
+
+      if (!stockOk) {
+        await payload.update({
+          collection: 'orders',
+          id: Number(orderId),
+          data: { status: 'cancelled' },
+        })
+        console.error(`⚠️ Pedido #${orderId} cancelado automáticamente por falta de stock`)
+      } else {
+        // 3. Stock ok → marcar como pagado
+        await payload.update({
+          collection: 'orders',
+          id: Number(orderId),
+          data: {
+            status: 'paid',
+            stripeSessionId: session.id,
+            stripePaymentIntentId:
+              typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
+          },
+        })
+
+        if (order?.items?.length) {
+          await Promise.all(order.items.map((item: any) => reduceVariantStock(payload, item)))
+          console.log(`✓ Stock actualizado para pedido #${orderId}`)
+
+          sendOrderConfirmation({
+            to: order.customerEmail,
+            customerName: order.customerName,
+            orderId: order.id,
+            items: order.items.map((item: any) => ({
+              productName: item.productName,
+              color: item.color ?? '',
+              size: item.size ?? 'Único',
+              qty: item.qty,
+              unitPrice: item.unitPrice,
+            })),
+            subtotal: order.subtotal,
+            shippingCost: order.shippingCost,
+            total: order.total,
+            paymentMethod: 'oxxo',
+            address: {
+              street: order.address?.street,
+              number: order.address?.number ?? undefined,
+              colonia: order.address?.colonia ?? undefined,
+              city: order.address?.city,
+              state: order.address?.state,
+              postalCode: order.address?.postalCode,
+            },
+          }).catch((err) => console.error('Error enviando email post-pago:', err))
+
+          sendAdminOrderNotification({
+            to: order.customerEmail,
+            customerName: order.customerName,
+            orderId: order.id,
+            items: order.items.map((item: any) => ({
+              productName: item.productName,
+              color: item.color ?? '',
+              size: item.size ?? 'Único',
+              qty: item.qty,
+              unitPrice: item.unitPrice,
+            })),
+            subtotal: order.subtotal,
+            shippingCost: order.shippingCost,
+            total: order.total,
+            paymentMethod: 'oxxo',
+            address: {
+              street: order.address?.street,
+              number: order.address?.number ?? undefined,
+              colonia: order.address?.colonia ?? undefined,
+              city: order.address?.city,
+              state: order.address?.state,
+              postalCode: order.address?.postalCode,
+            },
+          }).catch((err) => console.error('Error enviando notificación al admin:', err))
+        }
+
+        console.log(`✓ Pedido #${orderId} marcado como pagado`)
 
         // Incrementar usedCount del cupón
         const couponCode = session.metadata?.couponCode
@@ -212,56 +318,6 @@ export async function POST(req: NextRequest) {
             })
           }
         }
-
-        sendOrderConfirmation({
-          to: order.customerEmail,
-          customerName: order.customerName,
-          orderId: order.id,
-          items: order.items.map((item: any) => ({
-            productName: item.productName,
-            color: item.color ?? '',
-            size: item.size ?? 'Único',
-            qty: item.qty,
-            unitPrice: item.unitPrice,
-          })),
-          subtotal: order.subtotal,
-          shippingCost: order.shippingCost,
-          total: order.total,
-          paymentMethod: 'oxxo',
-          address: {
-            street: order.address?.street,
-            number: order.address?.number ?? undefined,
-            colonia: order.address?.colonia ?? undefined,
-            city: order.address?.city,
-            state: order.address?.state,
-            postalCode: order.address?.postalCode,
-          },
-        }).catch((err) => console.error('Error enviando email post-pago:', err))
-
-        sendAdminOrderNotification({
-          to: order.customerEmail,
-          customerName: order.customerName,
-          orderId: order.id,
-          items: order.items.map((item: any) => ({
-            productName: item.productName,
-            color: item.color ?? '',
-            size: item.size ?? 'Único',
-            qty: item.qty,
-            unitPrice: item.unitPrice,
-          })),
-          subtotal: order.subtotal,
-          shippingCost: order.shippingCost,
-          total: order.total,
-          paymentMethod: 'oxxo',
-          address: {
-            street: order.address?.street,
-            number: order.address?.number ?? undefined,
-            colonia: order.address?.colonia ?? undefined,
-            city: order.address?.city,
-            state: order.address?.state,
-            postalCode: order.address?.postalCode,
-          },
-        }).catch((err) => console.error('Error enviando notificación al admin (oxxo):', err))
       }
     }
   }

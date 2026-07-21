@@ -43,14 +43,21 @@ export const Products: CollectionConfig = {
       },
       hooks: {
         beforeChange: [
-          ({ siblingData }) =>
-            siblingData.name
-              ?.toLowerCase()
-              .normalize('NFD')
-              .replace(/[\u0300-\u036f]/g, '')
-              .replace(/[^a-z0-9\s-]/g, '')
-              .trim()
-              .replace(/\s+/g, '-'),
+          ({ siblingData, value, originalDoc, operation }) => {
+            const toSlug = (name: string) =>
+              name
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-')
+
+            if (operation === 'create') return toSlug(siblingData.name ?? '')
+            if (siblingData.name && siblingData.name !== originalDoc?.name)
+              return toSlug(siblingData.name)
+            return value
+          },
         ],
       },
     },

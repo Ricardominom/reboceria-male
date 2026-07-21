@@ -9,6 +9,7 @@ import config from '@/payload.config'
 import WhatsAppButton from '@/components/WhatsAppButton'
 import { Analytics } from '@vercel/analytics/react'
 import Script from 'next/script'
+import CookieBanner from '@/components/CookieBanner'
 
 const nunito = Nunito({ subsets: ['latin'], variable: '--font-nunito' })
 const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat' })
@@ -82,6 +83,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <main>{children}</main>
         <Footer social={social} />
         <WhatsAppButton whatsapp={whatsapp} />
+        <CookieBanner />
         <Analytics />
       </body>
     </html>

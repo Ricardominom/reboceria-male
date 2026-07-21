@@ -104,7 +104,10 @@ export async function sendOrderConfirmation(data: OrderEmailData) {
 
 export async function sendAdminOrderNotification(data: OrderEmailData) {
   const adminEmail = process.env.ADMIN_EMAIL
-  if (!adminEmail) return
+  if (!adminEmail) {
+    console.error('⚠️ ADMIN_EMAIL no está configurada — notificación de pedido no enviada')
+    return
+  }
 
   const itemsHtml = data.items
     .map(
